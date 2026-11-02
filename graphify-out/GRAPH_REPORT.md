@@ -1,93 +1,113 @@
 # Graph Report - src  (2026-11-01)
 
 ## Corpus Check
-- Corpus is ~20,246 words - fits in a single context window. You may not need a graph.
+- Corpus is ~21,967 words - fits in a single context window. You may not need a graph.
 
 ## Summary
-- 260 nodes · 1398 edges · 7 communities
+- 264 nodes · 1473 edges · 11 communities
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
+- Telas: tema.ts
+- Telas: [id].tsx
+- Linhas de Lista
+- Início
+- Telas: formatar.ts
+- Regras de Acesso RN
+- Banco e Ações
 - Modelo de Domínio
-- Kit de UI
-- Kit de UI
-- Kit de UI
-- Telas: format.ts
-- Store e Ações
+- Regras de Acesso RN
 - Telas: _layout.tsx
+- Dados de Demonstração
 
 ## God Nodes (most connected - your core abstractions)
-1. `useStore()` - 44 edges
-2. `Icon()` - 41 edges
-3. `useUser()` - 38 edges
-4. `AppBar()` - 34 edges
-5. `EmptyState()` - 33 edges
-6. `Button()` - 30 edges
-7. `Home()` - 28 edges
-8. `FadeIn()` - 26 edges
-9. `Card()` - 26 edges
-10. `NoticeDetail()` - 25 edges
+1. `useBanco()` - 44 edges
+2. `Icone()` - 41 edges
+3. `useUsuario()` - 38 edges
+4. `BarraTopo()` - 36 edges
+5. `Botao()` - 30 edges
+6. `TelaInicio()` - 29 edges
+7. `Aparecer()` - 26 edges
+8. `Tela()` - 26 edges
+9. `cor` - 26 edges
+10. `TelaAviso()` - 24 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `AppLayout()` --calls--> `useStore()`  [EXTRACTED]
-  app/(app)/_layout.tsx → data/store.tsx
-- `TabsLayout()` --calls--> `isFamily()`  [EXTRACTED]
-  app/(app)/(tabs)/_layout.tsx → data/access.ts
-- `TabsLayout()` --calls--> `pendingActions()`  [EXTRACTED]
-  app/(app)/(tabs)/_layout.tsx → data/selectors.ts
-- `TabsLayout()` --calls--> `unreadNoticeCount()`  [EXTRACTED]
-  app/(app)/(tabs)/_layout.tsx → data/selectors.ts
-- `TabsLayout()` --calls--> `useStore()`  [EXTRACTED]
-  app/(app)/(tabs)/_layout.tsx → data/store.tsx
+- `LayoutLogado()` --calls--> `useBanco()`  [EXTRACTED]
+  app/(logado)/_layout.tsx → dados/banco.tsx
+- `LayoutAbas()` --calls--> `useBanco()`  [EXTRACTED]
+  app/(logado)/(abas)/_layout.tsx → dados/banco.tsx
+- `LayoutAbas()` --calls--> `useUsuario()`  [EXTRACTED]
+  app/(logado)/(abas)/_layout.tsx → dados/banco.tsx
+- `LayoutAbas()` --calls--> `pendencias()`  [EXTRACTED]
+  app/(logado)/(abas)/_layout.tsx → dados/consultas.ts
+- `LayoutAbas()` --calls--> `ehFamilia()`  [EXTRACTED]
+  app/(logado)/(abas)/_layout.tsx → dados/permissoes.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (7 total, 0 thin omitted)
+## Communities (11 total, 0 thin omitted)
 
-### Community 0 - "Modelo de Domínio"
-Cohesion: 0.09
-Nodes (47): Item, Pedidos(), Tab, st, canDecideAuthorization(), canLinkGuardian(), canPublish(), canPublishGeneral() (+39 more)
+### Community 0 - "Telas: tema.ts"
+Cohesion: 0.10
+Nodes (39): estilos, Carregamento(), LayoutRaiz(), Arquivo, estilos, Destino, Grupo(), confirmar() (+31 more)
 
-### Community 1 - "Kit de UI"
-Cohesion: 0.18
-Nodes (46): StudentScreen(), Kinship, LinkGuardian(), CertificateDetail(), NewCertificate(), Picked, st, today() (+38 more)
+### Community 1 - "Telas: [id].tsx"
+Cohesion: 0.25
+Nodes (38): TelaEntrar(), TelaAluno(), TelaPerfilAluno(), Parentesco, TelaVincular(), TelaAtestado(), TelaEnviarAtestado(), TelaAutorizacao() (+30 more)
 
-### Community 2 - "Kit de UI"
-Cohesion: 0.12
-Nodes (32): Target, confirm(), AppLayout(), KIND_ICON, st, st, Gate(), RootLayout() (+24 more)
-
-### Community 3 - "Kit de UI"
-Cohesion: 0.12
-Nodes (44): Notifications(), AlunoTab(), Avisos(), Filter, Counts, Home(), nextClass(), Shortcut (+36 more)
-
-### Community 4 - "Telas: format.ts"
+### Community 2 - "Linhas de Lista"
 Cohesion: 0.14
-Nodes (17): st, Stat(), canSeeNotice(), noticeRecipients(), TicketStatus, Weekday, age(), AUTH_TYPE_LABEL (+9 more)
+Nodes (28): TelaAvisos(), TipoFiltro, TelaSuporte(), TipoFiltro, BotaoFlutuante(), Filtro(), LinhaFiltros(), Etiqueta() (+20 more)
 
-### Community 5 - "Store e Ações"
-Cohesion: 0.12
-Nodes (3): Store, AuthorizationType, ReviewStatus
+### Community 3 - "Início"
+Cohesion: 0.13
+Nodes (27): Atalho, atalhosDo(), Bolinha(), CartaoHoje(), Contadores, estilos, Horario(), proximaAula() (+19 more)
 
-### Community 6 - "Telas: _layout.tsx"
-Cohesion: 0.23
-Nodes (12): badge(), icon(), IconName, TabsLayout(), Filter, Suporte(), isStaff(), lastActivity() (+4 more)
+### Community 4 - "Telas: formatar.ts"
+Cohesion: 0.25
+Nodes (17): TelaNovaAutorizacao(), TipoAutorizacao, dataCompleta(), dataCurta(), dataRelativa(), diaMais(), doisDigitos(), horaValida() (+9 more)
+
+### Community 5 - "Regras de Acesso RN"
+Cohesion: 0.19
+Nodes (17): ProvedorBanco(), useCriarBanco(), alunosVisiveis(), avisosVisiveis(), destinatariosDoAviso(), ehGestao(), EQUIPE, GESTAO (+9 more)
+
+### Community 6 - "Banco e Ações"
+Cohesion: 0.15
+Nodes (11): agora(), Banco, buscar(), ContextoBanco, Decisao, familiaDe(), nomeDoAluno(), notificar() (+3 more)
+
+### Community 7 - "Modelo de Domínio"
+Cohesion: 0.13
+Nodes (14): Aluno, Atestado, Autorizacao, Chamado, DiaSemana, Horario, Mensagem, Notificacao (+6 more)
+
+### Community 8 - "Regras de Acesso RN"
+Cohesion: 0.41
+Nodes (10): Aba, TelaPedidos(), pendencias(), atestadosVisiveis(), autorizacoesVisiveis(), ehFamilia(), podeAnalisarAtestado(), podeEnviarAtestado() (+2 more)
+
+### Community 9 - "Telas: _layout.tsx"
+Cohesion: 0.36
+Nodes (7): bolinha(), iconeAba(), LayoutAbas(), contarAvisosNaoLidos(), contarChamadosAguardando(), ehEquipe(), fonte
+
+### Community 10 - "Dados de Demonstração"
+Cohesion: 0.38
+Nodes (6): CONTAS_DEMO, criarDadosDemonstracao(), dia(), diasAtras(), SENHA_DEMO, BancoDados
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useStore()` connect `Kit de UI` to `Modelo de Domínio`, `Kit de UI`, `Kit de UI`, `Telas: format.ts`, `Telas: _layout.tsx`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
-- **Should `Modelo de Domínio` be split into smaller, more focused modules?**
-  _Cohesion score 0.08959899749373433 - nodes in this community are weakly interconnected._
-- **Why does `Store` connect `Store e Ações` to `Modelo de Domínio`, `Kit de UI`?**
-  _High betweenness centrality (0.036) - this node is a cross-community bridge._
-- **Should `Kit de UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.11510204081632654 - nodes in this community are weakly interconnected._
-- **Why does `Icon()` connect `Kit de UI` to `Modelo de Domínio`, `Kit de UI`, `Kit de UI`, `Telas: format.ts`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
-- **Should `Kit de UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.12322695035460993 - nodes in this community are weakly interconnected._
-- **Should `Telas: format.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.14035087719298245 - nodes in this community are weakly interconnected._
+- **Why does `useBanco()` connect `Telas: [id].tsx` to `Telas: tema.ts`, `Linhas de Lista`, `Início`, `Telas: formatar.ts`, `Banco e Ações`, `Regras de Acesso RN`, `Telas: _layout.tsx`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
+- **Should `Telas: tema.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.10445468509984639 - nodes in this community are weakly interconnected._
+- **Why does `Icone()` connect `Telas: [id].tsx` to `Telas: tema.ts`, `Linhas de Lista`, `Início`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Should `Linhas de Lista` be split into smaller, more focused modules?**
+  _Cohesion score 0.13978494623655913 - nodes in this community are weakly interconnected._
+- **Why does `useUsuario()` connect `Telas: [id].tsx` to `Telas: tema.ts`, `Linhas de Lista`, `Início`, `Telas: formatar.ts`, `Banco e Ações`, `Regras de Acesso RN`, `Telas: _layout.tsx`?**
+  _High betweenness centrality (0.019) - this node is a cross-community bridge._
+- **Should `Início` be split into smaller, more focused modules?**
+  _Cohesion score 0.12561576354679804 - nodes in this community are weakly interconnected._
+- **Should `Banco e Ações` be split into smaller, more focused modules?**
+  _Cohesion score 0.14705882352941177 - nodes in this community are weakly interconnected._

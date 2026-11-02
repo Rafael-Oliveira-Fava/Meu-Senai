@@ -1,6 +1,6 @@
 # Design — Meu SENAI
 
-Source of truth for tokens: [`src/theme.ts`](src/theme.ts). Components: [`src/components/ui.tsx`](src/components/ui.tsx), motion in [`src/components/motion.tsx`](src/components/motion.tsx).
+Source of truth for tokens: [`src/tema.ts`](src/tema.ts) (`cor`, `tipografia`, `espaco`, `raio`, `animacao`). Components: [`src/componentes/`](src/componentes) (`estrutura`, `controles`, `indicadores`, `linhas`), motion in [`src/componentes/animacao.tsx`](src/componentes/animacao.tsx).
 
 ## Direction
 

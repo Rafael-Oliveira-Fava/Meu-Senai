@@ -1,3 +1,7 @@
+/**
+ * LAYOUT RAIZ — primeira coisa que o app carrega.
+ * Carrega a fonte Roboto, os dados salvos e mostra a splash até tudo ficar pronto.
+ */
 import { Roboto_400Regular, Roboto_500Medium, Roboto_700Bold, useFonts } from '@expo-google-fonts/roboto';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -5,51 +9,52 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { SnackbarProvider } from '../components/snackbar';
-import { StoreProvider, useStore } from '../data/store';
-import { color } from '../theme';
+import { ProvedorMensagem } from '../componentes/mensagem';
+import { ProvedorBanco, useBanco } from '../dados/banco';
+import { cor } from '../tema';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+// No navegador: seleção de texto, foco e barra de rolagem com as cores do app.
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
-  // Browser surfaces carry the palette too: selection, focus ring, scrollbar.
-  const style = document.createElement('style');
-  style.textContent = `
-    ::selection { background: ${color.primaryContainer}; color: ${color.onPrimaryContainer}; }
-    :focus-visible { outline: 3px solid ${color.primary}; outline-offset: 2px; }
-    * { scrollbar-width: thin; scrollbar-color: ${color.outlineStrong} transparent; }
-    input, textarea { outline: none; caret-color: ${color.primary}; }
-    body { background: ${color.bg}; }
+  const css = document.createElement('style');
+  css.textContent = `
+    ::selection { background: ${cor.primariaClara}; color: ${cor.sobrePrimariaClara}; }
+    :focus-visible { outline: 3px solid ${cor.primaria}; outline-offset: 2px; }
+    * { scrollbar-width: thin; scrollbar-color: ${cor.bordaForte} transparent; }
+    input, textarea { outline: none; caret-color: ${cor.primaria}; }
+    body { background: ${cor.fundo}; }
   `;
-  document.head.appendChild(style);
+  document.head.appendChild(css);
 }
 
-function Gate() {
-  const { ready } = useStore();
-  const [fontsLoaded] = useFonts({ Roboto_400Regular, Roboto_500Medium, Roboto_700Bold });
-  const done = ready && fontsLoaded;
+/** Espera fonte + dados; depois mostra as telas. */
+function Carregamento() {
+  const { pronto } = useBanco();
+  const [fonteCarregada] = useFonts({ Roboto_400Regular, Roboto_500Medium, Roboto_700Bold });
+  const tudoPronto = pronto && fonteCarregada;
 
   useEffect(() => {
-    if (done) SplashScreen.hideAsync().catch(() => {});
-  }, [done]);
+    if (tudoPronto) SplashScreen.hideAsync().catch(() => {});
+  }, [tudoPronto]);
 
-  if (!done) return null;
+  if (!tudoPronto) return null;
   return (
     <>
       <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.bg }, animation: 'fade_from_bottom' }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: cor.fundo }, animation: 'fade_from_bottom' }} />
     </>
   );
 }
 
-export default function RootLayout() {
+export default function LayoutRaiz() {
   return (
     <SafeAreaProvider>
-      <StoreProvider>
-        <SnackbarProvider>
-          <Gate />
-        </SnackbarProvider>
-      </StoreProvider>
+      <ProvedorBanco>
+        <ProvedorMensagem>
+          <Carregamento />
+        </ProvedorMensagem>
+      </ProvedorBanco>
     </SafeAreaProvider>
   );
 }
