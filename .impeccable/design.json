@@ -1,0 +1,103 @@
+{
+  "source": "src/theme.ts",
+  "direction": "canon: school super-app standard (Layers, MeuSesi)",
+  "platform": "android",
+  "color": {
+    "primary": "#0B4DA2",
+    "primaryPressed": "#093F86",
+    "onPrimary": "#FFFFFF",
+    "onPrimaryMuted": "#C9DAF3",
+    "primaryContainer": "#E3ECFA",
+    "onPrimaryContainer": "#0A3A7A",
+    "bg": "#F3F5F9",
+    "surface": "#FFFFFF",
+    "surfaceAlt": "#F7F9FC",
+    "ink": "#111418",
+    "text": "#1F2937",
+    "muted": "#566173",
+    "outline": "#DCE2EB",
+    "outlineStrong": "#B9C3D1",
+    "red": "#E30613",
+    "redContainer": "#FDE4E5",
+    "onRedContainer": "#8C0710",
+    "green": "#1C7A45",
+    "greenContainer": "#E0F3E7",
+    "amber": "#8A5300",
+    "amberContainer": "#FFF0D4",
+    "redPressed": "#BF0511"
+  },
+  "font": {
+    "family": "Roboto",
+    "weights": [
+      400,
+      500,
+      700
+    ]
+  },
+  "type": {
+    "display": [
+      28,
+      34,
+      700
+    ],
+    "headline": [
+      22,
+      28,
+      700
+    ],
+    "title": [
+      18,
+      24,
+      700
+    ],
+    "titleSm": [
+      16,
+      22,
+      500
+    ],
+    "body": [
+      16,
+      24,
+      400
+    ],
+    "bodySm": [
+      14,
+      20,
+      400
+    ],
+    "label": [
+      14,
+      20,
+      500
+    ],
+    "labelSm": [
+      12,
+      16,
+      500
+    ]
+  },
+  "space": [
+    4,
+    8,
+    12,
+    16,
+    20,
+    24,
+    32
+  ],
+  "radius": {
+    "field": 16,
+    "card": 20,
+    "sheet": 28,
+    "pill": 999
+  },
+  "motion": {
+    "easeOut": "cubic-bezier(0.23,1,0.32,1)",
+    "press": 160,
+    "enter": 240,
+    "exit": 160,
+    "stagger": 40
+  },
+  "minTouch": 48,
+  "brandStripe": 4
+}
