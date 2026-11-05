@@ -54,7 +54,7 @@ const banco = mysql.createPool({
 const ordem = (tabela: Tabela) => ('criadoEm' in TABELAS[tabela] ? 'criadoEm DESC' : 'nome');
 
 async function lerTudo(): Promise<BancoDados> {
-  const dados = { versao: 2 } as BancoDados;
+  const dados = {} as BancoDados;
   for (const tabela of NOMES_TABELAS) {
     const [linhas] = await banco.query<RowDataPacket[]>(`SELECT * FROM ${tabela} ORDER BY ${ordem(tabela)}`);
     (dados[tabela] as object[]) = linhas.map((l) => deLinha(tabela, l));

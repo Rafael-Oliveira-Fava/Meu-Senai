@@ -40,17 +40,5 @@ yarn-error.*
 /ios
 /android
 
-# impeccable local
-.impeccable/questions/
-.impeccable/*.log
-
-graphify-out/cache/
-__pycache__/
-.impeccable/build/
-.impeccable/logo/
-.impeccable/payload.json
-graphify-out/.graphify_python
-graphify-out/.graphify_root
-
 # Senha do MySQL do servidor
 servidor/.env

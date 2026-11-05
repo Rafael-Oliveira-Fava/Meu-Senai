@@ -13,7 +13,7 @@ const EQUIPE: Perfil[] = ['professor', 'coordenador', 'diretor', 'secretaria'];
 const GESTAO: Perfil[] = ['coordenador', 'diretor', 'secretaria'];
 
 export const ehEquipe = (u: Usuario) => EQUIPE.includes(u.perfil);
-export const ehGestao = (u: Usuario) => GESTAO.includes(u.perfil);
+const ehGestao = (u: Usuario) => GESTAO.includes(u.perfil);
 export const ehFamilia = (u: Usuario) => u.perfil === 'aluno' || u.perfil === 'responsavel';
 
 /* ───────────── Alunos (RN04) ───────────── */
@@ -116,7 +116,7 @@ export const SETORES: { id: Setor; nome: string; dica: string }[] = [
 /** O usuário é quem atende este chamado? (o setor escolhido ou o professor escolhido) */
 export const atende = (u: Usuario, c: Chamado) => (c.setor === 'professor' ? u.id === c.professorId : u.perfil === c.setor);
 
-export const ultimaAtividade = (c: Chamado) => c.mensagens[c.mensagens.length - 1]?.em ?? c.criadoEm;
+const ultimaAtividade = (c: Chamado) => c.mensagens[c.mensagens.length - 1]?.em ?? c.criadoEm;
 
 /** Chamados que o usuário abriu ou que ele atende, do mais recente para o mais antigo. */
 export const chamadosVisiveis = (db: BancoDados, u: Usuario) =>
