@@ -3,20 +3,38 @@
 Aplicativo mobile de comunicação entre o SENAI, alunos, responsáveis e equipe (TCC).
 Feito com **Expo (React Native) + TypeScript**. Roda no Android, iOS e no navegador.
 
-> Todos os dados são fictícios e ficam salvos só no aparelho (AsyncStorage). Não há integração com sistemas oficiais do SENAI.
+> Todos os dados são fictícios e ficam num banco **MySQL**, acessado por um pequeno servidor Node.js (`servidor/`). Não há integração com sistemas oficiais do SENAI.
 
 ## Como rodar
+
+Você precisa do **Node.js** e do **MySQL** (com o **MySQL Workbench**) instalados.
+
+**1. Criar o banco.** No MySQL Workbench, abra `servidor/banco.sql` (File → Open SQL Script) e execute tudo (botão do raio ⚡). Isso cria o banco `meusenai` e as tabelas.
+
+**2. Configurar a senha do MySQL.** Copie `servidor/.env.exemplo` para `servidor/.env` e preencha `MYSQL_SENHA` (a mesma senha que você usa no Workbench).
+
+**3. Instalar e ligar o servidor** (deixe este terminal aberto):
 
 ```bash
 npm install
 ```
 
 ```bash
+npm run servidor
+```
+
+Na primeira vez, ele grava os dados de demonstração no banco.
+
+**4. Abrir o app** (em outro terminal):
+
+```bash
 npx expo start
 ```
 
-- **Celular:** instale o app **Expo Go** e leia o QR code que aparece no terminal.
+- **Celular:** instale o app **Expo Go** e leia o QR code. O celular precisa estar na mesma rede Wi-Fi do computador; o app encontra o servidor sozinho (mesmo IP do computador, porta 3333). Se o firewall perguntar, libere a porta 3333.
 - **Navegador:** aperte `w` no terminal (ou rode `npm run web`).
+
+Se o servidor estiver em outro endereço, crie um arquivo `.env` na raiz com `EXPO_PUBLIC_API_URL=http://IP-DO-SERVIDOR:3333`.
 
 ## Contas de demonstração
 
@@ -33,7 +51,7 @@ Senha de todas: `senai123`. Na tela de login, basta tocar no perfil.
 | Responsável (mãe da Ana) | claudia@familia.demo |
 | Aluna | ana@aluno.demo |
 
-"Minha conta" → **Restaurar dados de demonstração** volta tudo ao estado inicial.
+"Minha conta" → **Restaurar dados de demonstração** volta o banco ao estado inicial.
 
 ## O que o MVP cobre
 
@@ -60,9 +78,10 @@ npm run verificar
 
 | Comando | O que faz |
 | --- | --- |
-| `npm start` | Servidor Expo |
+| `npm run servidor` | Liga o servidor que conversa com o MySQL |
+| `npm start` | Servidor Expo (app) |
 | `npm run web` | Abre no navegador |
-| `npm run verificar` | Testa as regras de negócio |
+| `npm run verificar` | Testa as regras de negócio e a conversão dos dados do banco |
 | `npm run tipos` | Checagem de tipos (TypeScript) |
 | `npm run formatar` | Formata o código (Prettier) |
 | `npm run lint` | Procura erros comuns (ESLint) |
@@ -95,9 +114,35 @@ src/
     permissoes.ts       regras de negócio (quem vê e faz o quê)
     consultas.ts        contadores e buscas
     banco.tsx           dados + ações (publicar, enviar, decidir...)
+    esquema.ts          colunas das tabelas e conversão objeto ⇄ linha
+    api.ts              conversa com o servidor
   utilidades/formatar.ts  datas, máscaras e rótulos
   tema.ts               cores, letras, espaços e animações
+servidor/
+  banco.sql             cria o banco e as tabelas (rodar no MySQL Workbench)
+  index.ts              API (Express) que lê e grava no MySQL
+  .env.exemplo          modelo da configuração do MySQL
 ```
+
+## Banco de dados (MySQL)
+
+```
+App (celular/navegador)  ⇄  servidor/index.ts (Express, porta 3333)  ⇄  MySQL (banco meusenai)
+```
+
+Há uma tabela para cada tipo de informação (`usuarios`, `alunos`, `avisos`, `atestados`, `autorizacoes`, `chamados`, `notificacoes`) e uma tabela `config` com o último número de protocolo. Listas pequenas dentro de um registro (horários, mensagens da conversa, quem leu o aviso) ficam em colunas `JSON`. Veja tudo em `servidor/banco.sql`.
+
+Como funciona:
+
+1. Ao abrir, o app busca os dados no servidor (`GET /dados`). As senhas nunca saem do servidor; o login é conferido lá (`POST /entrar`).
+2. As regras (quem pode o quê) continuam no app, em `src/dados/banco.tsx`. A cada ação, o app envia só as linhas que mudaram (`POST /sincronizar`), e o servidor grava numa transação: ou grava tudo, ou nada.
+3. Se duas pessoas mudam o mesmo registro ao mesmo tempo (ex.: respondem a mesma conversa), o servidor grava só a primeira e recusa a segunda, em vez de apagar o que a primeira fez. O segundo aparelho recebe os dados novos e o aviso "Outra pessoa alterou isso ao mesmo tempo… faça de novo".
+4. A cada 15 segundos o app busca os dados de novo, então o que outro aparelho fizer (ou o que você mudar pelo Workbench) aparece sozinho.
+5. Só o usuário logado fica guardado no aparelho (AsyncStorage).
+
+Para ver os dados, no Workbench rode por exemplo `SELECT * FROM meusenai.avisos;`.
+
+Para mudar uma tabela: altere `servidor/banco.sql` (ou rode um `ALTER TABLE` no Workbench) e a lista de colunas em `src/dados/esquema.ts`.
 
 Documentação de produto e design: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md). Mapa do código: `graphify-out/graph.html`.
 
@@ -107,6 +152,7 @@ Logo SENAI: [SENAI_logo_2024.png](https://commons.wikimedia.org/wiki/File:SENAI_
 
 ## Limitações conhecidas (MVP)
 
-- Sem servidor: cada aparelho tem sua própria cópia dos dados.
+- O servidor confere o login, mas não confere as permissões de cada gravação (essas regras estão no app). Num sistema real, as regras iriam para o servidor, com login por token.
+- Sem internet ou com o servidor desligado, o app não abre.
 - Senhas de demonstração em texto puro, apenas para a apresentação.
 - Notificações dentro do app (sem push do sistema).

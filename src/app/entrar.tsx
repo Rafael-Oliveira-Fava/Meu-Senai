@@ -31,13 +31,11 @@ export default function TelaEntrar() {
     setErro(null);
     if (!e.trim() || !s) return setErro('Preencha e-mail e senha.');
     setCarregando(true);
-    // Pequena espera para o botão mostrar "Entrando…", como numa conexão real.
-    setTimeout(() => {
-      const resultado = entrar(e, s);
+    entrar(e, s).then((resultado) => {
       setCarregando(false);
       if (resultado.ok) router.replace('/');
       else setErro(resultado.erro);
-    }, 350);
+    });
   };
 
   return (

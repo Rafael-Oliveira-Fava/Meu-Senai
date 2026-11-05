@@ -1,7 +1,9 @@
 /**
  * BANCO — os dados do app e todas as ações que alteram esses dados.
  *
- * Os dados ficam em memória e são salvos no aparelho com o AsyncStorage.
+ * Os dados vêm do servidor (MySQL), ficam em memória para as telas lerem rápido,
+ * e a cada mudança só o que mudou é enviado de volta ao servidor (api.ts, esquema.ts).
+ * A cada 15 s o app busca os dados de novo, para ver o que outros aparelhos fizeram.
  * Toda ação segue o mesmo roteiro:
  *   1. confere a permissão (regras em permissoes.ts);
  *   2. valida os campos e devolve uma mensagem de erro clara;
@@ -13,7 +15,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { useMensagem } from '../componentes/mensagem';
+import { api, URL_API, type ErroServidor } from './api';
 import { criarDadosDemonstracao, SENHA_DEMO } from './demonstracao';
+import { diferencas, temMudancas, tirarFoto, type Foto } from './esquema';
 import {
   atende,
   destinatariosDoAviso,
@@ -41,13 +46,13 @@ import type {
   Usuario,
 } from './tipos';
 
-// Chaves usadas para salvar no aparelho (v2 = campos em português).
-const CHAVE_DADOS = 'meusenai:dados:v2';
-const CHAVE_SESSAO = 'meusenai:sessao:v2';
-
 /** Resultado de uma ação: sucesso (com o id criado) ou erro (com a mensagem para o usuário). */
 type Resultado = { ok: true; id?: string } | { ok: false; erro: string };
 const falha = (erro: string): Resultado => ({ ok: false, erro });
+
+// Só o usuário logado fica guardado no aparelho; os dados ficam no servidor.
+const CHAVE_SESSAO = 'meusenai:sessao';
+const INTERVALO_ATUALIZAR = 15_000;
 
 type Decisao = Exclude<Situacao, 'pendente'>;
 type NovaNotificacao = Omit<Notificacao, 'id' | 'usuarioId' | 'criadoEm' | 'lida'>;
@@ -85,9 +90,11 @@ const atendentesDe = (d: BancoDados, c: Chamado) => d.usuarios.filter((u) => ate
 /* ───────────── O banco ───────────── */
 
 function useCriarBanco() {
+  const mostrar = useMensagem();
   const [db, setDb] = useState<BancoDados>(criarDadosDemonstracao);
   const [sessaoId, setSessaoId] = useState<string | null>(null);
   const [pronto, setPronto] = useState(false);
+  const [erroConexao, setErroConexao] = useState<string | null>(null);
 
   // Cópia sempre atualizada dos dados, para validar antes de alterar.
   const dbAtual = useRef(db);
@@ -95,28 +102,83 @@ function useCriarBanco() {
     dbAtual.current = db;
   }, [db]);
 
-  // Ao abrir o app: carrega os dados e a sessão salvos no aparelho.
-  useEffect(() => {
-    Promise.all([AsyncStorage.getItem(CHAVE_DADOS), AsyncStorage.getItem(CHAVE_SESSAO)])
-      .then(([dadosSalvos, sessaoSalva]) => {
-        if (dadosSalvos) {
-          const lidos = JSON.parse(dadosSalvos) as BancoDados;
-          if (lidos.versao === 2) setDb(lidos);
-        }
-        if (sessaoSalva) setSessaoId(sessaoSalva);
-      })
-      .catch(() => {}) // dados corrompidos: segue com os dados de demonstração
-      .finally(() => setPronto(true));
-  }, []);
+  // O que o servidor já tem gravado (null até carregar).
+  const fotoSalva = useRef<Foto | null>(null);
 
-  // Salva sempre que os dados ou a sessão mudam.
+  // Fila: uma conversa com o servidor de cada vez, na ordem em que aconteceram.
+  const fila = useRef<Promise<unknown>>(Promise.resolve());
+  const naFila = <T,>(tarefa: () => Promise<T>): Promise<T> => {
+    const resultado = fila.current.then(tarefa);
+    fila.current = resultado.catch((erro) => console.warn('Servidor:', erro));
+    return resultado;
+  };
+
+  /** Troca os dados da memória pelos que vieram do servidor. */
+  const usarDadosDoServidor = (dados: BancoDados) => {
+    fotoSalva.current = tirarFoto(dados);
+    dbAtual.current = dados;
+    setDb(dados);
+  };
+
+  /** Envia ao servidor só o que mudou desde a última gravação. */
+  const enviarMudancas = async () => {
+    if (!fotoSalva.current) return;
+    const dados = dbAtual.current;
+    const mudancas = diferencas(fotoSalva.current, dados);
+    if (!temMudancas(mudancas)) return;
+    try {
+      await api.sincronizar(mudancas);
+      fotoSalva.current = tirarFoto(dados);
+    } catch (erro) {
+      // Outra pessoa mexeu no mesmo registro: o servidor não gravou nada.
+      // Pega a versão nova (a mudança deste aparelho é descartada) e avisa.
+      if (!(erro as ErroServidor).conflito) throw erro;
+      usarDadosDoServidor(await api.buscarDados());
+      mostrar((erro as ErroServidor).message, 'erro');
+    }
+  };
+
+  /** Busca a versão mais nova dos dados (antes, envia o que estiver pendente). */
+  const atualizar = async () => {
+    await enviarMudancas(); // se falhar, nada local é perdido: tenta de novo na próxima
+    const antes = dbAtual.current;
+    const dados = await api.buscarDados();
+    if (dbAtual.current === antes) usarDadosDoServidor(dados); // se o usuário mexeu enquanto buscava, fica para a próxima
+  };
+
+  // Ao abrir o app (e em "Tentar de novo"): busca os dados no servidor e a sessão guardada no aparelho.
+  const [tentativa, setTentativa] = useState(0);
   useEffect(() => {
-    if (pronto) AsyncStorage.setItem(CHAVE_DADOS, JSON.stringify(db)).catch(() => {});
+    Promise.all([api.buscarDados(), AsyncStorage.getItem(CHAVE_SESSAO)]).then(
+      ([dados, sessao]) => {
+        fotoSalva.current = tirarFoto(dados);
+        dbAtual.current = dados;
+        setDb(dados);
+        setSessaoId(sessao);
+        setPronto(true);
+      },
+      () => setErroConexao(`Não foi possível conectar ao servidor em ${URL_API}. Confira se ele está ligado (npm run servidor).`),
+    );
+  }, [tentativa]);
+
+  // Envia ao servidor sempre que os dados mudam.
+  useEffect(() => {
+    if (pronto) naFila(enviarMudancas).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- roda a cada mudança de `db`; o resto vem de refs
   }, [db, pronto]);
+
+  // Busca novidades de tempos em tempos.
   useEffect(() => {
     if (!pronto) return;
-    const salvar = sessaoId ? AsyncStorage.setItem(CHAVE_SESSAO, sessaoId) : AsyncStorage.removeItem(CHAVE_SESSAO);
-    salvar.catch(() => {});
+    const relogio = setInterval(() => naFila(atualizar).catch(() => {}), INTERVALO_ATUALIZAR);
+    return () => clearInterval(relogio);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `atualizar` só usa refs e a api
+  }, [pronto]);
+
+  // Guarda no aparelho quem está logado.
+  useEffect(() => {
+    if (!pronto) return;
+    (sessaoId ? AsyncStorage.setItem(CHAVE_SESSAO, sessaoId) : AsyncStorage.removeItem(CHAVE_SESSAO)).catch(() => {});
   }, [sessaoId, pronto]);
 
   const usuario = db.usuarios.find((u) => u.id === sessaoId) ?? null;
@@ -131,16 +193,27 @@ function useCriarBanco() {
 
   return {
     pronto,
+    erroConexao,
+    tentarDeNovo() {
+      setErroConexao(null);
+      setTentativa((n) => n + 1);
+    },
     db,
     usuario,
 
     /* ── Sessão (RF01) ── */
 
-    entrar(email: string, senha: string): Resultado {
-      const conta = dbAtual.current.usuarios.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-      if (!conta || conta.senha !== senha) return falha('E-mail ou senha incorretos. Confira e tente de novo.');
-      setSessaoId(conta.id);
-      return { ok: true };
+    /** A senha é conferida no servidor. */
+    async entrar(email: string, senha: string): Promise<Resultado> {
+      try {
+        const resposta = await naFila(() => api.entrar(email, senha));
+        if (!resposta.ok) return falha(resposta.erro);
+        await naFila(atualizar); // dados mais novos antes de abrir o app
+        setSessaoId(resposta.usuarioId);
+        return { ok: true };
+      } catch {
+        return falha('Sem conexão com o servidor. Tente de novo.');
+      }
     },
 
     sair: () => setSessaoId(null),

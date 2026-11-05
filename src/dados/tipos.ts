@@ -10,8 +10,11 @@ export interface Usuario {
   id: string;
   nome: string;
   email: string;
-  /** Só para a demonstração: senha em texto puro. Nunca fazer isso em produção. */
-  senha: string;
+  /**
+   * Só para a demonstração: senha em texto puro. Nunca fazer isso em produção.
+   * Fica só no servidor: o app recebe os usuários sem a senha.
+   */
+  senha?: string;
   perfil: Perfil;
   /** Alunos ligados a esta conta (aluno: ele mesmo; responsável: seus filhos). */
   alunoIds: string[];
