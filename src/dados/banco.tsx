@@ -481,6 +481,19 @@ function useCriarBanco() {
       return { ok: true, id };
     },
 
+    /** Quem abriu a conversa pode reabrir se a dúvida voltou; o setor é avisado. */
+    reabrirChamado(id: string): Resultado {
+      const c = buscar(dbAtual.current.chamados, id);
+      if (!usuario || !c || c.criadoPorId !== usuario.id) return falha('Só quem abriu a solicitação pode reabrir.');
+      if (c.situacao !== 'encerrado') return falha('Esta solicitação já está aberta.');
+      alterar((d) => {
+        const x = buscar(d.chamados, id)!;
+        x.situacao = 'aberto';
+        notificar(d, atendentesDe(d, x), { tipo: 'suporte', titulo: 'Conversa reaberta', texto: x.assunto, link: `/suporte/${id}` });
+      });
+      return { ok: true, id };
+    },
+
     /* ── Notificações (RF07) ── */
 
     marcarNotificacaoLida(id: string) {
