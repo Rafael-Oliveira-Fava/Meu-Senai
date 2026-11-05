@@ -12,6 +12,7 @@ import { BarraTopo, Bloqueado, Cartao, Tela } from '../../../componentes/estrutu
 import { Icone } from '../../../componentes/icone';
 import { EtiquetaSituacao, FaixaErro, LinhaInfo } from '../../../componentes/indicadores';
 import { useMensagem } from '../../../componentes/mensagem';
+import { enderecoArquivo } from '../../../dados/api';
 import { useBanco, useUsuario } from '../../../dados/banco';
 import { alunoPorId, usuarioPorId } from '../../../dados/consultas';
 import { atestadosVisiveis, podeAnalisarAtestado } from '../../../dados/permissoes';
@@ -76,7 +77,9 @@ export default function TelaAtestado() {
             texto="Abrir arquivo"
             icone="open-in-new"
             variante="contorno"
-            aoTocar={() => Linking.openURL(atestado.arquivoUri!).catch(() => mostrar('Não foi possível abrir o arquivo.', 'erro'))}
+            aoTocar={() =>
+              Linking.openURL(enderecoArquivo(atestado.arquivoUri!)).catch(() => mostrar('Não foi possível abrir o arquivo.', 'erro'))
+            }
           />
         ) : null}
 

@@ -8,9 +8,14 @@
  *   GET  /dados       → todos os dados (sem as senhas)
  *   POST /entrar      → confere e-mail e senha
  *   POST /sincronizar → grava o que mudou no app (numa transação: tudo ou nada)
+ *   POST /arquivos     → recebe a foto ou o PDF de um atestado e devolve o endereço
+ *   GET  /arquivos/:id → devolve o arquivo
+ *   POST /trocar-senha → troca a senha de quem confirma a senha atual
  *
  * As regras de negócio (quem pode o quê) ficam no app, em src/dados/banco.tsx.
  */
+import { randomUUID } from 'node:crypto';
+
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import mysql, { type PoolConnection, type RowDataPacket } from 'mysql2/promise';
@@ -176,6 +181,72 @@ app.post('/sincronizar', async (req, res) => {
   res.json({ ok: true });
 });
 
+/* ── Arquivos dos atestados (guardados na tabela arquivos) ── */
+
+const TIPOS_ACEITOS = /^(image\/(jpeg|png|webp|heic|heif)|application\/pdf)$/;
+const LIMITE_ARQUIVO = 10 * 1024 * 1024; // 10 MB, o mesmo limite da tela
+
+// O corpo da requisição é o próprio arquivo; o nome vai em ?nome=
+app.post('/arquivos', express.raw({ type: () => true, limit: LIMITE_ARQUIVO }), async (req, res) => {
+  const tipo = String(req.headers['content-type'] ?? '').split(';')[0];
+  const nome = String(req.query.nome ?? '').slice(0, 200);
+  const conteudo = req.body as Buffer;
+  if (!TIPOS_ACEITOS.test(tipo)) {
+    res.status(400).json({ ok: false, erro: 'Envie uma foto (JPG, PNG) ou um PDF.' });
+    return;
+  }
+  if (!nome || !Buffer.isBuffer(conteudo) || conteudo.length === 0) {
+    res.status(400).json({ ok: false, erro: 'Arquivo vazio.' });
+    return;
+  }
+  const id = randomUUID();
+  await banco.query('INSERT INTO arquivos (id, nome, tipo, tamanho, conteudo, enviadoEm) VALUES (?, ?, ?, ?, ?, ?)', [
+    id,
+    nome,
+    tipo,
+    conteudo.length,
+    conteudo,
+    new Date().toISOString(),
+  ]);
+  res.json({ ok: true, uri: `/arquivos/${id}` });
+});
+
+app.get('/arquivos/:id', async (req, res) => {
+  const [linhas] = await banco.query<RowDataPacket[]>('SELECT nome, tipo, conteudo FROM arquivos WHERE id = ?', [req.params.id]);
+  const arquivo = linhas[0];
+  if (!arquivo) {
+    res.status(404).json({ ok: false, erro: 'Arquivo não encontrado.' });
+    return;
+  }
+  res.type(arquivo.tipo).set('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(arquivo.nome)}`);
+  res.send(arquivo.conteudo);
+});
+
+/* ── Senha ── */
+
+app.post('/trocar-senha', async (req, res) => {
+  const { usuarioId, senhaAtual, novaSenha } = req.body ?? {};
+  if (typeof usuarioId !== 'string' || typeof senhaAtual !== 'string' || typeof novaSenha !== 'string') {
+    res.status(400).json({ ok: false, erro: 'Preencha a senha atual e a nova.' });
+    return;
+  }
+  if (novaSenha.length < 6) {
+    res.status(400).json({ ok: false, erro: 'A nova senha precisa ter pelo menos 6 caracteres.' });
+    return;
+  }
+  if (novaSenha === senhaAtual) {
+    res.status(400).json({ ok: false, erro: 'A nova senha precisa ser diferente da atual.' });
+    return;
+  }
+  const [linhas] = await banco.query<RowDataPacket[]>('SELECT senha FROM usuarios WHERE id = ?', [usuarioId]);
+  if (!linhas[0] || linhas[0].senha !== senhaAtual) {
+    res.status(400).json({ ok: false, erro: 'A senha atual está incorreta.' });
+    return;
+  }
+  await banco.query('UPDATE usuarios SET senha = ? WHERE id = ?', [novaSenha, usuarioId]);
+  res.json({ ok: true });
+});
+
 // Qualquer erro nas rotas cai aqui.
 app.use((erro: Error & { code?: string }, _req: Request, res: Response, _next: NextFunction) => {
   if (erro instanceof Conflito) {
@@ -186,7 +257,10 @@ app.use((erro: Error & { code?: string }, _req: Request, res: Response, _next: N
     return;
   }
   console.error(erro);
-  if (erro.code === 'ER_DUP_ENTRY')
+  if (erro.name === 'PayloadTooLargeError') res.status(400).json({ ok: false, erro: 'O arquivo passa de 10 MB.' });
+  else if (erro.code === 'ER_NO_SUCH_TABLE')
+    res.status(500).json({ ok: false, erro: 'Falta uma tabela no banco. Rode servidor/banco.sql de novo no MySQL Workbench.' });
+  else if (erro.code === 'ER_DUP_ENTRY')
     res.status(400).json({ ok: false, erro: 'Já existe um registro com esse valor (ex.: e-mail repetido).' });
   else res.status(500).json({ ok: false, erro: 'Erro no servidor. Tente de novo.' });
 });

@@ -39,4 +39,23 @@ export const api = {
   entrar: (email: string, senha: string) =>
     chamar<{ ok: true; usuarioId: string } | { ok: false; erro: string }>('/entrar', { email, senha }),
   sincronizar: (mudancas: Mudancas) => chamar<{ ok: true }>('/sincronizar', mudancas),
+  trocarSenha: (usuarioId: string, senhaAtual: string, novaSenha: string) =>
+    chamar<{ ok: true }>('/trocar-senha', { usuarioId, senhaAtual, novaSenha }),
+
+  /** Envia a foto ou o PDF do atestado e devolve o endereço dele no servidor (ex.: /arquivos/abc). */
+  async enviarArquivo(arquivo: { uri: string; nome: string; tipo: string }): Promise<string> {
+    // Lê o arquivo escolhido (no celular ou no navegador) e manda os bytes como estão.
+    const conteudo = await (await fetch(arquivo.uri)).blob();
+    const resposta = await fetch(`${URL_API}/arquivos?nome=${encodeURIComponent(arquivo.nome)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': arquivo.tipo },
+      body: conteudo,
+    });
+    const json = await resposta.json().catch(() => ({}));
+    if (!resposta.ok) throw erroServidor(json.erro ?? 'Não foi possível enviar o arquivo.', false);
+    return json.uri as string;
+  },
 };
+
+/** Endereço completo para abrir um arquivo guardado no servidor. */
+export const enderecoArquivo = (uri: string) => (uri.startsWith('/arquivos/') ? `${URL_API}${uri}` : uri);

@@ -12,14 +12,18 @@ import { BarraTopo, Bloqueado, Tela } from '../../../componentes/estrutura';
 import { Icone } from '../../../componentes/icone';
 import { FaixaErro } from '../../../componentes/indicadores';
 import { useMensagem } from '../../../componentes/mensagem';
+import { api } from '../../../dados/api';
 import { useBanco, useUsuario } from '../../../dados/banco';
 import { alunosVisiveis, podeEnviarAtestado } from '../../../dados/permissoes';
 import { diaMais, lerDataDigitada, mascaraData, tamanhoArquivo } from '../../../utilidades/formatar';
 import { cor, espaco, raio, tipografia } from '../../../tema';
 
-type Arquivo = { nome: string; tamanho?: number; uri: string };
+type Arquivo = { nome: string; tamanho?: number; uri: string; tipo: string };
 
 const LIMITE_ARQUIVO = 10 * 1024 * 1024; // 10 MB
+
+/** Tipo do arquivo pelo nome, quando o aparelho não informa. */
+const tipoPeloNome = (nome: string) => (/\.pdf$/i.test(nome) ? 'application/pdf' : /\.png$/i.test(nome) ? 'image/png' : 'image/jpeg');
 
 export default function TelaEnviarAtestado() {
   const { db, enviarAtestado } = useBanco();
@@ -53,14 +57,15 @@ export default function TelaEnviarAtestado() {
       if (r.canceled || !r.assets?.length) return;
       const a = r.assets[0];
       if (a.size && a.size > LIMITE_ARQUIVO) return setErro('O arquivo passa de 10 MB. Envie uma foto menor ou um PDF.');
-      setArquivo({ nome: a.name, tamanho: a.size ?? undefined, uri: a.uri });
+      setArquivo({ nome: a.name, tamanho: a.size ?? undefined, uri: a.uri, tipo: a.mimeType || tipoPeloNome(a.name) });
       setErro(null);
     } catch {
       setErro('Não foi possível abrir o arquivo. Tente de novo.');
     }
   };
 
-  const enviar = () => {
+  const enviar = async () => {
+    if (enviando) return;
     setErro(null);
     const dataInicio = lerDataDigitada(inicio);
     const dataFim = lerDataDigitada(fim);
@@ -68,7 +73,10 @@ export default function TelaEnviarAtestado() {
     if (!dataInicio || !dataFim) return setErro('Confira as datas no formato dd/mm/aaaa.');
     if (!arquivo) return setErro('Anexe a foto ou o PDF do atestado.');
     setEnviando(true);
-    setTimeout(() => {
+    try {
+      // 1. Sobe o arquivo para o servidor, para a secretaria abrir de qualquer aparelho.
+      const arquivoUri = await api.enviarArquivo(arquivo);
+      // 2. Registra o atestado com o endereço do arquivo.
       const resultado = enviarAtestado({
         alunoId,
         inicio: dataInicio,
@@ -76,13 +84,16 @@ export default function TelaEnviarAtestado() {
         motivo,
         arquivoNome: arquivo.nome,
         arquivoTamanho: arquivo.tamanho,
-        arquivoUri: arquivo.uri,
+        arquivoUri,
       });
-      setEnviando(false);
       if (!resultado.ok) return setErro(resultado.erro);
       mostrar('Atestado enviado para a secretaria.');
       router.replace(`/atestado/${resultado.id}`);
-    }, 400);
+    } catch (e) {
+      setErro(e instanceof Error && e.message ? e.message : 'Não foi possível enviar o arquivo. Confira a conexão e tente de novo.');
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const escolherPeriodo = (dias: number) => {
