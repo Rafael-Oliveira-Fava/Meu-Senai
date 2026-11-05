@@ -81,10 +81,29 @@ npm run verificar
 | `npm run servidor` | Liga o servidor que conversa com o MySQL |
 | `npm start` | Servidor Expo (app) |
 | `npm run web` | Abre no navegador |
+| `npm test` | Roda todos os testes automáticos (veja abaixo) |
 | `npm run verificar` | Testa as regras de negócio e a conversão dos dados do banco |
 | `npm run tipos` | Checagem de tipos (TypeScript) |
 | `npm run formatar` | Formata o código (Prettier) |
 | `npm run lint` | Procura erros comuns (ESLint) |
+
+## Testes automáticos
+
+```bash
+npm test
+```
+
+| Onde | O que testa |
+| --- | --- |
+| `scripts/verificar-regras.ts` | Regras de negócio RN02–RN10 (quem vê e faz o quê) |
+| `scripts/verificar-banco.ts` | Conversão dos dados para as tabelas e detecção do que mudou |
+| `testes/formatar.test.ts` | Datas, máscaras dos campos, nomes e tamanhos |
+| `testes/consultas.test.ts` | Pendências, contadores das abas e destinatários dos avisos |
+| `testes/servidor.test.ts` | O servidor com MySQL de verdade: login, senhas, gravação, conflito, transação |
+
+O teste do servidor cria um banco separado (`meusenai_teste`), usa a configuração do `servidor/.env` e apaga esse banco no fim, sem tocar no `meusenai`. Sem MySQL na máquina, ele é pulado com um aviso.
+
+No GitHub, os testes rodam sozinhos em cada pull request (`.github/workflows/testes.yml`), com lint, checagem de tipos e um MySQL 8.
 
 ## Estrutura
 

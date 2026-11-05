@@ -39,11 +39,12 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "eslint src scripts servidor",
+    "lint": "eslint src scripts servidor testes",
     "verificar": "tsx scripts/verificar-regras.ts && tsx scripts/verificar-banco.ts",
+    "test": "npm run verificar && node --import tsx --test \"testes/*.test.ts\"",
     "servidor": "tsx servidor/index.ts",
     "tipos": "tsc --noEmit",
-    "formatar": "prettier --write src scripts servidor"
+    "formatar": "prettier --write src scripts servidor testes"
   },
   "private": true
 }

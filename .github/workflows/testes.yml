@@ -1,0 +1,40 @@
+# Roda os testes automáticos a cada pull request e a cada envio para a main.
+# Usa um MySQL 8 de verdade para testar o servidor.
+name: Testes
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: senai
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -psenai"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_SENHA: senai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Tipos (TypeScript)
+        run: npm run tipos
+      - name: Testes (regras, banco e servidor com MySQL)
+        run: npm test
