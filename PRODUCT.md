@@ -10,7 +10,7 @@ android
 
 ## Stack
 
-Expo (React Native) + TypeScript, chosen by the user. Data is simulated locally for the MVP: seeded demo data persisted on the device with AsyncStorage (localStorage on web). No real backend; no integration with official SENAI systems (TCC scope limitation, section 3.8).
+Expo (React Native) + TypeScript, chosen by the user. Data for the MVP: seeded demo data stored in a MySQL database behind a small Node.js/Express API (`servidor/`). No integration with official SENAI systems (TCC scope limitation, section 3.8).
 
 ## Users
 

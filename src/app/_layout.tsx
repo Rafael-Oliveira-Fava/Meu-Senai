@@ -1,17 +1,19 @@
 /**
  * LAYOUT RAIZ — primeira coisa que o app carrega.
- * Carrega a fonte Roboto, os dados salvos e mostra a splash até tudo ficar pronto.
+ * Carrega a fonte Roboto e os dados do servidor, e mostra a splash até tudo ficar pronto.
  */
 import { Roboto_400Regular, Roboto_500Medium, Roboto_700Bold, useFonts } from '@expo-google-fonts/roboto';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { Botao } from '../componentes/controles';
+import { Icone } from '../componentes/icone';
 import { ProvedorMensagem } from '../componentes/mensagem';
 import { ProvedorBanco, useBanco } from '../dados/banco';
-import { cor } from '../tema';
+import { cor, espaco, tipografia } from '../tema';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -30,14 +32,15 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 
 /** Espera fonte + dados; depois mostra as telas. */
 function Carregamento() {
-  const { pronto } = useBanco();
+  const { pronto, erroConexao, tentarDeNovo } = useBanco();
   const [fonteCarregada] = useFonts({ Roboto_400Regular, Roboto_500Medium, Roboto_700Bold });
   const tudoPronto = pronto && fonteCarregada;
 
   useEffect(() => {
-    if (tudoPronto) SplashScreen.hideAsync().catch(() => {});
-  }, [tudoPronto]);
+    if (tudoPronto || erroConexao) SplashScreen.hideAsync().catch(() => {});
+  }, [tudoPronto, erroConexao]);
 
+  if (erroConexao) return <SemConexao mensagem={erroConexao} aoTentar={tentarDeNovo} />;
   if (!tudoPronto) return null;
   return (
     <>
@@ -47,14 +50,28 @@ function Carregamento() {
   );
 }
 
+/** Servidor desligado ou fora da rede: explica e deixa tentar de novo. */
+function SemConexao({ mensagem, aoTentar }: { mensagem: string; aoTentar: () => void }) {
+  return (
+    <View
+      style={{ flex: 1, backgroundColor: cor.fundo, alignItems: 'center', justifyContent: 'center', padding: espaco[6], gap: espaco[4] }}
+    >
+      <Icone nome="cloud-off-outline" tamanho={48} cor={cor.suave} />
+      <Text style={[tipografia.titulo, { color: cor.tinta, textAlign: 'center' }]}>Sem conexão com o servidor</Text>
+      <Text style={[tipografia.corpo, { color: cor.suave, textAlign: 'center', maxWidth: 420 }]}>{mensagem}</Text>
+      <Botao texto="Tentar de novo" icone="refresh" aoTocar={aoTentar} />
+    </View>
+  );
+}
+
 export default function LayoutRaiz() {
   return (
     <SafeAreaProvider>
-      <ProvedorBanco>
-        <ProvedorMensagem>
+      <ProvedorMensagem>
+        <ProvedorBanco>
           <Carregamento />
-        </ProvedorMensagem>
-      </ProvedorBanco>
+        </ProvedorBanco>
+      </ProvedorMensagem>
     </SafeAreaProvider>
   );
 }

@@ -44,8 +44,6 @@ yarn-error.*
 .impeccable/questions/
 .impeccable/*.log
 
-# configuracao local do Claude Code
-.claude/settings.local.json
 graphify-out/cache/
 __pycache__/
 .impeccable/build/
@@ -53,3 +51,6 @@ __pycache__/
 .impeccable/payload.json
 graphify-out/.graphify_python
 graphify-out/.graphify_root
+
+# Senha do MySQL do servidor
+servidor/.env
