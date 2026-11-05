@@ -116,7 +116,7 @@ export const ehTabela = (nome: unknown): nome is Tabela => typeof nome === 'stri
 export const colunasDe = (tabela: Tabela) => Object.keys(TABELAS[tabela]);
 
 /** Valor aceito pelo MySQL como parâmetro. */
-export type ValorSql = string | number | null;
+type ValorSql = string | number | null;
 export type Linha = Record<string, unknown>;
 
 const colunas = (tabela: Tabela) => Object.entries(TABELAS[tabela]) as [string, TipoColuna][];

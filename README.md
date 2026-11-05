@@ -144,11 +144,11 @@ Para ver os dados, no Workbench rode por exemplo `SELECT * FROM meusenai.avisos;
 
 Para mudar uma tabela: altere `servidor/banco.sql` (ou rode um `ALTER TABLE` no Workbench) e a lista de colunas em `src/dados/esquema.ts`.
 
-Documentação de produto e design: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md). Mapa do código: `graphify-out/graph.html`.
+Documentação de produto e design: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md).
 
 ## Créditos
 
-Logo SENAI: [SENAI_logo_2024.png](https://commons.wikimedia.org/wiki/File:SENAI_logo_2024.png), Wikimedia Commons, licença CC BY-SA 4.0. Recortada em `assets/senai-mark.png`. O logo "MEU SENAI" (`assets/meu-senai-logo*.png`) junta essa marca com "MEU" na fonte Exo 2 ExtraBold (SIL OFL), inclinada 10° para combinar com o letreiro; gerado por `scripts/gerar-logo.py`. A marca SENAI pertence à CNI/SENAI; uso aqui restrito ao projeto acadêmico.
+Logo SENAI: [SENAI_logo_2024.png](https://commons.wikimedia.org/wiki/File:SENAI_logo_2024.png), Wikimedia Commons, licença CC BY-SA 4.0. O logo "MEU SENAI" (`assets/meu-senai-logo-white.png`) junta essa marca com "MEU" na fonte Exo 2 ExtraBold (SIL OFL), inclinada 10° para combinar com o letreiro. A marca SENAI pertence à CNI/SENAI; uso aqui restrito ao projeto acadêmico.
 
 ## Limitações conhecidas (MVP)
 

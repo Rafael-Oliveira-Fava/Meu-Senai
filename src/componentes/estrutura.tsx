@@ -16,7 +16,7 @@ import { Vazio } from './indicadores';
 /* ───────────── Logo ───────────── */
 
 // Logo "MEU SENAI": marca oficial do SENAI (Wikimedia Commons, CC BY-SA 4.0)
-// + "MEU" na fonte Exo 2, gerada por scripts/gerar-logo.py.
+// + "MEU" na fonte Exo 2.
 const LOGO_BRANCA = require('../../assets/meu-senai-logo-white.png');
 const PROPORCAO_LOGO = 1371 / 186;
 

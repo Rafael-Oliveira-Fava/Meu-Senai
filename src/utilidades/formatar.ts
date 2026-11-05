@@ -54,13 +54,13 @@ const doisDigitos = (n: number) => String(n).padStart(2, '0');
 export const diaDeHoje = (): DiaSemana | null => ([null, 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'] as const)[new Date().getDay()];
 
 /** "2026-11-01" → Date. */
-export function lerDia(texto: string) {
+function lerDia(texto: string) {
   const [ano, mes, dia] = texto.split('-').map(Number);
   return new Date(ano, mes - 1, dia);
 }
 
 /** Date → "2026-11-01". */
-export const paraDia = (d: Date) => `${d.getFullYear()}-${doisDigitos(d.getMonth() + 1)}-${doisDigitos(d.getDate())}`;
+const paraDia = (d: Date) => `${d.getFullYear()}-${doisDigitos(d.getMonth() + 1)}-${doisDigitos(d.getDate())}`;
 
 /** "2026-11-01" → "01/11/2026". */
 export function dataCompleta(texto: string) {

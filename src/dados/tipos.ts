@@ -158,7 +158,6 @@ export interface Notificacao {
 
 /** Tudo o que o app guarda. */
 export interface BancoDados {
-  versao: number;
   contadorProtocolo: number;
   usuarios: Usuario[];
   alunos: Aluno[];

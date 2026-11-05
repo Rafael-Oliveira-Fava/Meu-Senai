@@ -37,7 +37,6 @@ export const CONTAS_DEMO = [
 export function criarDadosDemonstracao(): BancoDados {
   const senha = SENHA_DEMO;
   return {
-    versao: 2,
     contadorProtocolo: 152,
 
     usuarios: [
