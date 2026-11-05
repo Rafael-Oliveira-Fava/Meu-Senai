@@ -12,8 +12,12 @@ import {
   avisosVisiveis,
   chamadosVisiveis,
   MAX_RESPONSAVEIS,
+  autorizacaoVencida,
   podeAnalisarAtestado,
+  podeCancelar,
   podeDecidir,
+  podeEditarAviso,
+  podeLembrarCiencia,
   podeEnviarAtestado,
   podePublicar,
   podePublicarGeral,
@@ -95,6 +99,28 @@ regra('RN08 pedido da escola é decidido pelo responsável; pedido da família, 
   assert.ok(podeDecidir(u('u-fernanda'), autorizacao('a-ana')));
   assert.ok(!podeDecidir(u('u-claudia'), autorizacao('a-ana')));
   assert.ok(!autorizacoesVisiveis(db, u('u-claudia')).some((a) => a.alunoId === 's-pedro'));
+});
+
+regra('RN08 pedido vencido não é mais decidido; quem pediu pode cancelar', () => {
+  const visita = autorizacao('a-visita'); // pedida pela escola (professor Ricardo), pendente
+  assert.ok(podeCancelar(u('u-ricardo'), visita));
+  assert.ok(!podeCancelar(u('u-larissa'), visita));
+  const vencida = { ...visita, data: '2000-01-01' };
+  assert.ok(autorizacaoVencida(vencida));
+  assert.ok(!podeDecidir(u('u-larissa'), vencida));
+  assert.ok(!podeCancelar(u('u-ricardo'), vencida));
+  assert.ok(!autorizacaoVencida({ ...vencida, situacao: 'aprovado' }));
+});
+
+regra('RN06 só o autor corrige/apaga o aviso; autor e gestão lembram a ciência', () => {
+  const suspensao = db.avisos.find((a) => a.id === 'n-suspensao')!;
+  const autor = u(suspensao.autorId);
+  assert.ok(podeEditarAviso(autor, suspensao));
+  assert.ok(!podeEditarAviso(u('u-larissa'), suspensao));
+  assert.ok(podeLembrarCiencia(autor, suspensao));
+  assert.ok(podeLembrarCiencia(u('u-juliana'), suspensao));
+  assert.ok(!podeLembrarCiencia(u('u-larissa'), suspensao));
+  assert.ok(!podeLembrarCiencia(u('u-ricardo'), { ...suspensao, autorId: 'u-paulo' }));
 });
 
 regra('RN09 suporte chega só ao setor/professor escolhido', () => {

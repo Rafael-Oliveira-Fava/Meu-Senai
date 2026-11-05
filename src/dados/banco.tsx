@@ -24,14 +24,18 @@ import {
   destinatariosDoAviso,
   MAX_RESPONSAVEIS,
   podeAnalisarAtestado,
+  podeCancelar,
   podeDecidir,
+  podeEditarAviso,
   podeEnviarAtestado,
+  podeLembrarCiencia,
   podePublicar,
   podePublicarGeral,
   podeVerAluno,
   podeVincularResponsavel,
   turmasPermitidas,
 } from './permissoes';
+import { hoje } from '../utilidades/formatar';
 import type {
   Aviso,
   BancoDados,
@@ -54,7 +58,7 @@ const falha = (erro: string): Resultado => ({ ok: false, erro });
 const CHAVE_SESSAO = 'meusenai:sessao';
 const INTERVALO_ATUALIZAR = 15_000;
 
-type Decisao = Exclude<Situacao, 'pendente'>;
+type Decisao = Extract<Situacao, 'aprovado' | 'recusado'>;
 type NovaNotificacao = Omit<Notificacao, 'id' | 'usuarioId' | 'criadoEm' | 'lida'>;
 
 // Utilitários
@@ -253,6 +257,25 @@ function useCriarBanco() {
       });
     },
 
+    /** Lembra os responsáveis que ainda não tocaram em "Estou ciente". */
+    lembrarCiencia(id: string): Resultado {
+      const aviso = buscar(dbAtual.current.avisos, id);
+      if (!usuario || !aviso || !podeLembrarCiencia(usuario, aviso) || aviso.publico.tipo !== 'individual')
+        return falha('Você não pode enviar lembrete deste aviso.');
+      const aluno = buscar(dbAtual.current.alunos, aviso.publico.alunoId);
+      const faltam = (aluno?.responsavelIds ?? []).filter((rid) => !aviso.cientes.some((c) => c.usuarioId === rid));
+      if (!faltam.length) return falha('Todos os responsáveis já confirmaram.');
+      alterar((d) =>
+        notificar(d, faltam, {
+          tipo: 'aviso',
+          titulo: 'Lembrete: confirme a ciência',
+          texto: aviso.titulo,
+          link: `/aviso/${id}`,
+        }),
+      );
+      return { ok: true, id };
+    },
+
     publicarAviso(dados: { titulo: string; texto: string; categoria: CategoriaAviso; publico: Publico; pedeCiencia: boolean }): Resultado {
       const p = dados.publico;
       if (!usuario || !podePublicar(usuario)) return falha('Seu perfil não pode publicar comunicados.');
@@ -292,6 +315,38 @@ function useCriarBanco() {
         );
       });
       return { ok: true, id };
+    },
+
+    /** Corrige título e texto do aviso (só quem publicou). Os destinatários são avisados da correção. */
+    editarAviso(id: string, dados: { titulo: string; texto: string }): Resultado {
+      const aviso = buscar(dbAtual.current.avisos, id);
+      if (!usuario || !aviso || !podeEditarAviso(usuario, aviso)) return falha('Só quem publicou pode corrigir este aviso.');
+      if (curto(dados.titulo, 4)) return falha('Escreva um título com pelo menos 4 letras.');
+      if (curto(dados.texto, 10)) return falha('Escreva a mensagem com pelo menos 10 letras.');
+      alterar((d) => {
+        const a = buscar(d.avisos, id)!;
+        a.titulo = dados.titulo.trim();
+        a.texto = dados.texto.trim();
+        // Quem já tinha lido precisa ver a versão corrigida.
+        a.lidoPor = [];
+        notificar(
+          d,
+          destinatariosDoAviso(d, a).map((u) => u.id),
+          { tipo: 'aviso', titulo: 'Aviso corrigido', texto: a.titulo, link: `/aviso/${id}` },
+        );
+      });
+      return { ok: true, id };
+    },
+
+    /** Apaga o aviso (só quem publicou) e as notificações dele. */
+    apagarAviso(id: string): Resultado {
+      const aviso = buscar(dbAtual.current.avisos, id);
+      if (!usuario || !aviso || !podeEditarAviso(usuario, aviso)) return falha('Só quem publicou pode apagar este aviso.');
+      alterar((d) => {
+        d.avisos = d.avisos.filter((a) => a.id !== id);
+        d.notificacoes = d.notificacoes.filter((n) => n.link !== `/aviso/${id}`);
+      });
+      return { ok: true };
     },
 
     /* ── Atestados (RF08) ── */
@@ -372,6 +427,9 @@ function useCriarBanco() {
       if (curto(dados.titulo, 4)) return falha('Dê um título ao pedido.');
       if (dados.tipo === 'saida_antecipada' && !dados.hora) return falha('Informe o horário de saída.');
       if (dados.tipo === 'saida_antecipada' && !dados.buscaPor?.trim()) return falha('Informe quem vai buscar o aluno.');
+      if (dados.data < hoje()) return falha('A data não pode ser no passado.');
+      if (dados.data === hoje() && dados.hora && dados.hora < new Date().toTimeString().slice(0, 5))
+        return falha('Esse horário já passou. Confira a hora.');
 
       const id = novoId('a');
       const daEscola = usuario.perfil !== 'responsavel';
@@ -411,6 +469,35 @@ function useCriarBanco() {
         notificar(d, daEscola ? [x.criadoPorId, ...idsComPerfil(d, 'coordenador')] : familiaDe(d, x.alunoId), {
           tipo: 'autorizacao',
           titulo: `${usuario.nome.split(' ')[0]} ${verbo}`,
+          texto: `${nomeDoAluno(d, x.alunoId)} · ${x.titulo}`,
+          link: `/autorizacao/${id}`,
+        });
+        // Saída antecipada aprovada: os professores da turma ficam sabendo (são eles que liberam da sala).
+        if (x.tipo === 'saida_antecipada' && decisao === 'aprovado') {
+          const turma = buscar(d.alunos, x.alunoId)?.turma ?? '';
+          const professores = d.usuarios.filter((u) => u.perfil === 'professor' && u.turmas?.includes(turma)).map((u) => u.id);
+          notificar(d, professores, {
+            tipo: 'autorizacao',
+            titulo: 'Saída antecipada liberada',
+            texto: `${nomeDoAluno(d, x.alunoId)} sai ${x.hora ? `às ${x.hora}` : 'mais cedo'}`,
+            link: `/autorizacao/${id}`,
+          });
+        }
+      });
+      return { ok: true, id };
+    },
+
+    /** Quem fez o pedido desiste antes da decisão; quem ia decidir é avisado. */
+    cancelarAutorizacao(id: string): Resultado {
+      const a = buscar(dbAtual.current.autorizacoes, id);
+      if (!usuario || !a || !podeCancelar(usuario, a)) return falha('Este pedido não pode mais ser cancelado.');
+      alterar((d) => {
+        const x = buscar(d.autorizacoes, id)!;
+        Object.assign(x, { situacao: 'cancelado', decididoPorId: usuario.id, decididoEm: agora() });
+        const daEscola = x.origem === 'escola';
+        notificar(d, daEscola ? (buscar(d.alunos, x.alunoId)?.responsavelIds ?? []) : idsComPerfil(d, 'coordenador', 'secretaria'), {
+          tipo: 'autorizacao',
+          titulo: 'Pedido cancelado',
           texto: `${nomeDoAluno(d, x.alunoId)} · ${x.titulo}`,
           link: `/autorizacao/${id}`,
         });

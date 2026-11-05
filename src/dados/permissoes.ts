@@ -4,6 +4,7 @@
  * Todas as telas leem os dados por estas funções, então um perfil nunca vê o
  * que não pode. O script `npm run verificar` testa estas regras.
  */
+import { hoje } from '../utilidades/formatar';
 import type { Aluno, Autorizacao, Aviso, BancoDados, Chamado, Perfil, Setor, Usuario } from './tipos';
 
 /** Cada aluno tem no máximo 2 responsáveis (RN03). */
@@ -58,6 +59,12 @@ export const avisosVisiveis = (db: BancoDados, u: Usuario) =>
 export const destinatariosDoAviso = (db: BancoDados, aviso: Aviso) =>
   db.usuarios.filter((u) => u.id !== aviso.autorId && podeVerAviso(db, u, aviso) && !(ehGestao(u) && aviso.publico.tipo !== 'geral'));
 
+/** Quem publicou pode corrigir ou apagar o próprio aviso. */
+export const podeEditarAviso = (u: Usuario, aviso: Aviso) => aviso.autorId === u.id;
+
+/** Quem publicou e a gestão podem lembrar os responsáveis que ainda não confirmaram ciência. */
+export const podeLembrarCiencia = (u: Usuario, aviso: Aviso) => aviso.pedeCiencia && (aviso.autorId === u.id || ehGestao(u));
+
 /** Só a equipe publica; comunicado geral só a gestão (RN05). */
 export const podePublicar = ehEquipe;
 export const podePublicarGeral = ehGestao;
@@ -94,12 +101,18 @@ export function autorizacoesVisiveis(db: BancoDados, u: Usuario) {
   return [...lista].sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
 }
 
+/** Pedido pendente cuja data já passou: ninguém decide mais, aparece como "Vencido". */
+export const autorizacaoVencida = (a: Autorizacao, dia = hoje()) => a.situacao === 'pendente' && a.data < dia;
+
 /** Pedido da escola: o responsável decide. Pedido da família: a gestão decide. */
 export function podeDecidir(u: Usuario, a: Autorizacao) {
-  if (a.situacao !== 'pendente') return false;
+  if (a.situacao !== 'pendente' || autorizacaoVencida(a)) return false;
   if (a.origem === 'escola') return u.perfil === 'responsavel' && u.alunoIds.includes(a.alunoId);
   return ehGestao(u);
 }
+
+/** Quem fez o pedido pode cancelar enquanto ninguém decidiu. */
+export const podeCancelar = (u: Usuario, a: Autorizacao) => a.criadoPorId === u.id && a.situacao === 'pendente' && !autorizacaoVencida(a);
 
 export const podePedirSaida = (u: Usuario) => u.perfil === 'responsavel';
 export const podePedirAutorizacao = ehEquipe;
