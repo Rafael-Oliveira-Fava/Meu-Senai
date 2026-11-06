@@ -1,5 +1,7 @@
 /**
- * TELA DE LOGIN (RF01) — e-mail e senha, ou toque numa conta de demonstração.
+ * TELA DE LOGIN (RF01) — e-mail e senha.
+ * Acesso rápido escondido: segurar o logo por 2 s mostra as contas de teste
+ * e o botão para restaurar os dados iniciais (útil para apresentar o app).
  */
 import { Redirect, router } from 'expo-router';
 import { useRef, useState, type ComponentRef } from 'react';
@@ -7,16 +9,20 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Aparecer } from '../componentes/animacao';
+import { confirmar } from '../componentes/confirmar';
 import { Botao, Campo } from '../componentes/controles';
 import { Avatar, Divisor, Logo } from '../componentes/estrutura';
 import { Icone } from '../componentes/icone';
 import { FaixaErro } from '../componentes/indicadores';
+import { useMensagem } from '../componentes/mensagem';
 import { useBanco } from '../dados/banco';
 import { CONTAS_DEMO, SENHA_DEMO } from '../dados/demonstracao';
 import { cor, espaco, raio, sombra, tipografia } from '../tema';
 
 export default function TelaEntrar() {
-  const { usuario, entrar } = useBanco();
+  const { usuario, entrar, restaurarDemonstracao } = useBanco();
+  const mostrar = useMensagem();
+  const [acessoRapido, setAcessoRapido] = useState(false);
   const margens = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -43,7 +49,10 @@ export default function TelaEntrar() {
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: margens.bottom + espaco[8] }}>
         <View style={[estilos.topo, { paddingTop: margens.top + espaco[8] }]}>
           <View style={estilos.coluna}>
-            <Logo tamanho={32} />
+            {/* Segurar o logo por 2 s abre o acesso rápido (sem aviso visual de propósito). */}
+            <Pressable onLongPress={() => setAcessoRapido((v) => !v)} delayLongPress={2000} style={{ alignSelf: 'flex-start' }}>
+              <Logo tamanho={32} />
+            </Pressable>
             <Text style={[tipografia.corpo, { color: cor.sobrePrimariaSuave, marginTop: espaco[3], maxWidth: 420 }]}>
               Comunicados, atestados, autorizações e suporte da escola em um só lugar.
             </Text>
@@ -90,36 +99,47 @@ export default function TelaEntrar() {
             <Botao texto={carregando ? 'Entrando…' : 'Entrar'} aoTocar={() => fazerLogin()} carregando={carregando} largo />
           </Aparecer>
 
-          <Aparecer ordem={1} style={{ marginTop: espaco[6], gap: espaco[2] }}>
-            <Text style={[tipografia.subtitulo, { color: cor.tinta }]}>Contas de demonstração</Text>
-            <Text style={[tipografia.corpoPequeno, { color: cor.suave }]}>
-              Toque em um perfil para entrar. Todos os dados são fictícios, criados para a apresentação do TCC.
-            </Text>
-            <View style={estilos.lista}>
-              {CONTAS_DEMO.map((conta, i) => (
-                <View key={conta.email}>
-                  {i > 0 ? <Divisor recuo={72} /> : null}
-                  <Pressable
-                    onPress={() => {
-                      setEmail(conta.email);
-                      setSenha(SENHA_DEMO);
-                      fazerLogin(conta.email, SENHA_DEMO);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Entrar como ${conta.nome}, ${conta.descricao}`}
-                    style={({ pressed }) => [estilos.conta, pressed && { backgroundColor: cor.superficieAlt }]}
-                  >
-                    <Avatar nome={conta.nome} tamanho={40} tom="azul" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[tipografia.subtitulo, { color: cor.tinta }]}>{conta.nome}</Text>
-                      <Text style={[tipografia.corpoPequeno, { color: cor.suave }]}>{conta.descricao}</Text>
-                    </View>
-                    <Icone nome="chevron-right" cor={cor.bordaForte} />
-                  </Pressable>
-                </View>
-              ))}
-            </View>
-          </Aparecer>
+          {acessoRapido ? (
+            <Aparecer style={{ marginTop: espaco[6], gap: espaco[2] }}>
+              <Text style={[tipografia.subtitulo, { color: cor.tinta }]}>Acesso rápido</Text>
+              <View style={estilos.lista}>
+                {CONTAS_DEMO.map((conta, i) => (
+                  <View key={conta.email}>
+                    {i > 0 ? <Divisor recuo={72} /> : null}
+                    <Pressable
+                      onPress={() => {
+                        setEmail(conta.email);
+                        setSenha(SENHA_DEMO);
+                        fazerLogin(conta.email, SENHA_DEMO);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Entrar como ${conta.nome}, ${conta.descricao}`}
+                      style={({ pressed }) => [estilos.conta, pressed && { backgroundColor: cor.superficieAlt }]}
+                    >
+                      <Avatar nome={conta.nome} tamanho={40} tom="azul" />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[tipografia.subtitulo, { color: cor.tinta }]}>{conta.nome}</Text>
+                        <Text style={[tipografia.corpoPequeno, { color: cor.suave }]}>{conta.descricao}</Text>
+                      </View>
+                      <Icone nome="chevron-right" cor={cor.bordaForte} />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+              <Botao
+                texto="Restaurar dados iniciais"
+                icone="restore"
+                variante="perigo"
+                largo
+                aoTocar={() =>
+                  confirmar('Restaurar dados iniciais?', 'Avisos, pedidos e mensagens criados depois serão apagados para todos.', () => {
+                    restaurarDemonstracao();
+                    mostrar('Dados iniciais restaurados.');
+                  })
+                }
+              />
+            </Aparecer>
+          ) : null}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

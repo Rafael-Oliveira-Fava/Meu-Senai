@@ -1,7 +1,7 @@
 /**
- * DADOS DE DEMONSTRAÇÃO — usados na apresentação do TCC.
- * Todas as pessoas, turmas e mensagens são fictícias.
- * As datas são calculadas a partir de hoje, então a demo sempre parece atual.
+ * DADOS INICIAIS — gravados no banco na primeira vez que o servidor liga
+ * (e de novo em "Restaurar dados iniciais").
+ * As datas são calculadas a partir de hoje, então os dados sempre parecem atuais.
  */
 import type { BancoDados } from './tipos';
 

@@ -61,7 +61,7 @@ function atalhosDo(u: Usuario, c: Contadores): Atalho[] {
 }
 
 export default function TelaInicio() {
-  const { db } = useBanco();
+  const { db, sair } = useBanco();
   const usuario = useUsuario();
   const margens = useSafeAreaInsets();
   const alunos = alunosVisiveis(db, usuario);
@@ -97,15 +97,28 @@ export default function TelaInicio() {
         <View style={estilos.coluna}>
           <View style={estilos.linhaLogo}>
             <Logo tamanho={18} />
-            <Pressable
-              onPress={() => router.push('/notificacoes')}
-              accessibilityRole="button"
-              accessibilityLabel={notificacoes ? `Notificações, ${notificacoes} não lidas` : 'Notificações'}
-              style={({ pressed }) => [estilos.sino, pressed && { backgroundColor: 'rgba(255,255,255,0.18)' }]}
-            >
-              <Icone nome="bell-outline" cor={cor.sobrePrimaria} tamanho={24} />
-              {notificacoes ? <Bolinha numero={notificacoes} borda={cor.primaria} /> : null}
-            </Pressable>
+            <View style={{ flexDirection: 'row', gap: espaco[2] }}>
+              <Pressable
+                onPress={() => router.push('/notificacoes')}
+                accessibilityRole="button"
+                accessibilityLabel={notificacoes ? `Notificações, ${notificacoes} não lidas` : 'Notificações'}
+                style={({ pressed }) => [estilos.sino, pressed && { backgroundColor: 'rgba(255,255,255,0.18)' }]}
+              >
+                <Icone nome="bell-outline" cor={cor.sobrePrimaria} tamanho={24} />
+                {notificacoes ? <Bolinha numero={notificacoes} borda={cor.primaria} /> : null}
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  sair();
+                  router.replace('/entrar');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Sair da conta"
+                style={({ pressed }) => [estilos.sino, pressed && { backgroundColor: 'rgba(255,255,255,0.18)' }]}
+              >
+                <Icone nome="logout" cor={cor.sobrePrimaria} tamanho={22} />
+              </Pressable>
+            </View>
           </View>
           <View style={estilos.linhaSaudacao}>
             <Pressable onPress={() => router.push('/conta')} accessibilityRole="button" accessibilityLabel="Minha conta" hitSlop={6}>
