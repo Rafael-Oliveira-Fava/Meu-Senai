@@ -637,6 +637,27 @@ function useCriarBanco() {
       });
       return { ok: true };
     },
+
+    /** Tira o responsável do aluno (ex.: vinculado por engano). A conta continua existindo. */
+    desvincularResponsavel(alunoId: string, responsavelId: string): Resultado {
+      const aluno = buscar(dbAtual.current.alunos, alunoId);
+      if (!usuario || !podeVincularResponsavel(usuario)) return falha('Somente a secretaria desvincula responsáveis.');
+      if (!aluno || !aluno.responsavelIds.includes(responsavelId)) return falha('Este responsável não está vinculado ao aluno.');
+
+      alterar((d) => {
+        const a = buscar(d.alunos, alunoId)!;
+        const responsavel = buscar(d.usuarios, responsavelId);
+        a.responsavelIds = a.responsavelIds.filter((id) => id !== responsavelId);
+        if (responsavel) responsavel.alunoIds = responsavel.alunoIds.filter((id) => id !== alunoId);
+        notificar(d, [responsavelId, a.usuarioId], {
+          tipo: 'vinculo',
+          titulo: 'Responsável desvinculado',
+          texto: `${responsavel?.nome ?? 'Responsável'} não acompanha mais ${a.nome}`,
+          link: `/aluno/${alunoId}`,
+        });
+      });
+      return { ok: true };
+    },
   };
 }
 

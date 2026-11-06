@@ -1,35 +1,20 @@
 /**
- * MINHA CONTA — dados do usuário, nota de privacidade (LGPD), sair
- * e restaurar os dados de demonstração.
+ * MINHA CONTA — dados do usuário, nota de privacidade (LGPD), trocar senha e sair.
  */
 import { router } from 'expo-router';
-import { Alert, Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Botao } from '../../componentes/controles';
 import { Avatar, BarraTopo, Cartao, Tela, TituloSecao } from '../../componentes/estrutura';
 import { LinhaInfo } from '../../componentes/indicadores';
-import { useMensagem } from '../../componentes/mensagem';
 import { useBanco, useUsuario } from '../../dados/banco';
 import { alunosVisiveis, ehFamilia } from '../../dados/permissoes';
 import { NOME_PERFIL } from '../../utilidades/formatar';
 import { cor, espaco, tipografia } from '../../tema';
 
-/** Pergunta "tem certeza?" (no navegador usa o confirm do próprio navegador). */
-function confirmar(titulo: string, mensagem: string, aoConfirmar: () => void) {
-  if (Platform.OS === 'web') {
-    if (window.confirm(`${titulo}\n\n${mensagem}`)) aoConfirmar();
-    return;
-  }
-  Alert.alert(titulo, mensagem, [
-    { text: 'Cancelar', style: 'cancel' },
-    { text: 'Confirmar', style: 'destructive', onPress: aoConfirmar },
-  ]);
-}
-
 export default function TelaConta() {
-  const { db, sair, restaurarDemonstracao } = useBanco();
+  const { db, sair } = useBanco();
   const usuario = useUsuario();
-  const mostrar = useMensagem();
   const alunos = alunosVisiveis(db, usuario);
 
   return (
@@ -64,11 +49,12 @@ export default function TelaConta() {
             conforme a função de cada um (LGPD).
           </Text>
           <Text style={[tipografia.corpoPequeno, { color: cor.suave }]}>
-            Nesta versão de demonstração, os dados ficam salvos apenas neste aparelho.
+            Os dados ficam no servidor da escola. Neste aparelho fica salva só a sua sessão.
           </Text>
         </Cartao>
 
         <View style={{ gap: espaco[3], marginTop: espaco[2] }}>
+          <Botao texto="Trocar senha" icone="lock-reset" variante="suave" largo aoTocar={() => router.push('/senha')} />
           <Botao
             texto="Sair"
             icone="logout"
@@ -78,18 +64,6 @@ export default function TelaConta() {
               sair();
               router.replace('/entrar');
             }}
-          />
-          <Botao
-            texto="Restaurar dados de demonstração"
-            icone="restore"
-            variante="perigo"
-            largo
-            aoTocar={() =>
-              confirmar('Restaurar dados?', 'Todos os avisos, pedidos e mensagens criados nesta demonstração serão apagados.', () => {
-                restaurarDemonstracao();
-                mostrar('Dados de demonstração restaurados.');
-              })
-            }
           />
         </View>
       </Tela>

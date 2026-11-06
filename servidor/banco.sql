@@ -75,6 +75,17 @@ CREATE TABLE IF NOT EXISTS atestados (
   INDEX idx_atestados_aluno (alunoId)
 );
 
+-- Arquivos enviados pelo app (foto ou PDF do atestado).
+-- O atestado guarda o endereço do arquivo em "arquivoUri", ex.: /arquivos/<id>.
+CREATE TABLE IF NOT EXISTS arquivos (
+  id        VARCHAR(40)  NOT NULL PRIMARY KEY,
+  nome      VARCHAR(200) NOT NULL,
+  tipo      VARCHAR(100) NOT NULL,              -- image/jpeg, application/pdf...
+  tamanho   INT          NOT NULL,
+  conteudo  LONGBLOB     NOT NULL,
+  enviadoEm VARCHAR(30)  NOT NULL
+);
+
 -- Autorizações: saída antecipada, atividade externa... (RF09).
 CREATE TABLE IF NOT EXISTS autorizacoes (
   id             VARCHAR(40)  NOT NULL PRIMARY KEY,

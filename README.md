@@ -161,6 +161,8 @@ Como funciona:
 
 Para ver os dados, no Workbench rode por exemplo `SELECT * FROM meusenai.avisos;`.
 
+As fotos e PDFs dos atestados ficam na tabela `arquivos` (rota `POST /arquivos`), então a secretaria abre o arquivo de qualquer aparelho. Se o seu banco foi criado antes dessa tabela existir, rode o `servidor/banco.sql` de novo no Workbench: ele só cria o que falta e não apaga nada.
+
 Para mudar uma tabela: altere `servidor/banco.sql` (ou rode um `ALTER TABLE` no Workbench) e a lista de colunas em `src/dados/esquema.ts`.
 
 Documentação de produto e design: [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md).

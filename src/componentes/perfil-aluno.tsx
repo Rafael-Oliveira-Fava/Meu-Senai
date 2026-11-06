@@ -3,24 +3,36 @@
  * e os perfis vinculados (o próprio aluno + até 2 responsáveis).
  */
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useBanco } from '../dados/banco';
 import { usuarioPorId } from '../dados/consultas';
 import { MAX_RESPONSAVEIS, podeVincularResponsavel } from '../dados/permissoes';
 import type { Aluno, BancoDados, Usuario } from '../dados/tipos';
 import { dataCompleta, DIAS_SEMANA, diaDeHoje, idade } from '../utilidades/formatar';
 import { cor, espaco, raio, tipografia } from '../tema';
 import { Aparecer } from './animacao';
+import { confirmar } from './confirmar';
 import { Botao } from './controles';
 import { Avatar, Cartao, Divisor, TituloSecao } from './estrutura';
 import { Icone } from './icone';
 import { Etiqueta, LinhaInfo } from './indicadores';
+import { useMensagem } from './mensagem';
 
 export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: Usuario; aluno: Aluno }) {
+  const { desvincularResponsavel } = useBanco();
+  const mostrar = useMensagem();
   const hoje = diaDeHoje();
   const responsaveis = aluno.responsavelIds.map((id) => usuarioPorId(db, id)).filter((u): u is Usuario => !!u);
   const contaDoAluno = usuarioPorId(db, aluno.usuarioId);
   const vagas = MAX_RESPONSAVEIS - responsaveis.length;
+  const secretaria = podeVincularResponsavel(usuario);
+
+  const desvincular = (r: Usuario) =>
+    confirmar('Desvincular responsável?', `${r.nome} deixará de acompanhar ${aluno.nome} pelo aplicativo.`, () => {
+      const resultado = desvincularResponsavel(aluno.id, r.id);
+      mostrar(resultado.ok ? `${r.nome} foi desvinculado.` : resultado.erro, resultado.ok ? 'ok' : 'erro');
+    });
   // Sábado só aparece se o aluno tiver aula nesse dia.
   const dias = DIAS_SEMANA.filter((d) => d.id !== 'sab' || aluno.horarios.some((h) => h.dia === 'sab'));
 
@@ -111,6 +123,7 @@ export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: U
                 nome={r.nome}
                 detalhe={`${r.parentesco ?? 'Responsável'}${r.telefone ? ` · ${r.telefone}` : ''}`}
                 email={r.email}
+                aoDesvincular={secretaria ? () => desvincular(r) : undefined}
               />
             ))}
             {Array.from({ length: vagas }, (_, i) => (
@@ -123,7 +136,7 @@ export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: U
           <Text style={[tipografia.rotuloPequeno, { color: cor.suave, textAlign: 'right' }]}>
             {1 + responsaveis.length} de {1 + MAX_RESPONSAVEIS} perfis em uso
           </Text>
-          {podeVincularResponsavel(usuario) && vagas > 0 ? (
+          {secretaria && vagas > 0 ? (
             <Botao
               texto="Vincular responsável"
               icone="account-plus"
@@ -138,7 +151,7 @@ export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: U
   );
 }
 
-function Pessoa({ nome, detalhe, email }: { nome: string; detalhe: string; email: string }) {
+function Pessoa({ nome, detalhe, email, aoDesvincular }: { nome: string; detalhe: string; email: string; aoDesvincular?: () => void }) {
   return (
     <View style={estilos.pessoa}>
       <Avatar nome={nome} tamanho={40} tom="azul" />
@@ -153,6 +166,17 @@ function Pessoa({ nome, detalhe, email }: { nome: string; detalhe: string; email
           {email}
         </Text>
       </View>
+      {aoDesvincular ? (
+        <Pressable
+          onPress={aoDesvincular}
+          accessibilityRole="button"
+          accessibilityLabel={`Desvincular ${nome}`}
+          hitSlop={8}
+          style={({ pressed }) => [estilos.desvincular, pressed && { backgroundColor: cor.vermelhoClaro }]}
+        >
+          <Icone nome="link-variant-off" tamanho={20} cor={cor.vermelho} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -162,6 +186,7 @@ const estilos = StyleSheet.create({
   colunaDia: { flex: 1.4 },
   colunaHora: { flex: 1, textAlign: 'right' },
   pessoa: { flexDirection: 'row', alignItems: 'center', gap: espaco[3], paddingVertical: espaco[2] },
+  desvincular: { width: 44, height: 44, borderRadius: raio.pilula, alignItems: 'center', justifyContent: 'center' },
   vaga: {
     flexDirection: 'row',
     alignItems: 'center',
