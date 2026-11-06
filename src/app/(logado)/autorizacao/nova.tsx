@@ -16,10 +16,12 @@ import { alunosVisiveis, podePedirAutorizacao, podePedirSaida } from '../../../d
 import type { TipoAutorizacao } from '../../../dados/tipos';
 import { diaMais, horaValida, lerDataDigitada, mascaraData, mascaraHora, primeiroNome } from '../../../utilidades/formatar';
 import { espaco } from '../../../tema';
+import { useToqueUnico } from '../../../utilidades/toque-unico';
 
 export default function TelaNovaAutorizacao() {
   const { db, criarAutorizacao } = useBanco();
   const usuario = useUsuario();
+  const { liberado, travar } = useToqueUnico();
   const mostrar = useMensagem();
   const familia = podePedirSaida(usuario);
   const alunos = alunosVisiveis(db, usuario);
@@ -40,6 +42,7 @@ export default function TelaNovaAutorizacao() {
   const nomeAluno = alunoId ? primeiroNome(alunos.find((a) => a.id === alunoId)?.nome ?? '') : 'o aluno';
 
   const enviar = () => {
+    if (!liberado()) return; // evita pedido duplicado com dois toques rápidos
     setErro(null);
     const dia = lerDataDigitada(data);
     if (!alunoId) return setErro('Escolha o aluno.');
@@ -55,6 +58,7 @@ export default function TelaNovaAutorizacao() {
       buscaPor: saida ? buscaPor : undefined,
     });
     if (!resultado.ok) return setErro(resultado.erro);
+    travar();
     mostrar(familia ? 'Pedido enviado para a coordenação.' : 'Pedido enviado aos responsáveis.');
     router.replace(`/autorizacao/${resultado.id}`);
   };

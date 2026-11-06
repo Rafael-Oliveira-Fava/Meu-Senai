@@ -174,4 +174,4 @@ Logo SENAI: [SENAI_logo_2024.png](https://commons.wikimedia.org/wiki/File:SENAI_
 - O servidor confere o login, mas não confere as permissões de cada gravação (essas regras estão no app). Num sistema real, as regras iriam para o servidor, com login por token.
 - Sem internet ou com o servidor desligado, o app não abre.
 - Senhas de demonstração em texto puro, apenas para a apresentação.
-- Notificações dentro do app (sem push do sistema).
+- Notificações aparecem no celular enquanto o app está aberto ou em segundo plano (notificação local). Com o app fechado de vez, seria preciso push, que exige um build próprio pelo EAS. No Expo Go aparece um aviso amarelo da biblioteca de notificações: é esperado.

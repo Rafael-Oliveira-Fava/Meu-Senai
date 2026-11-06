@@ -1,6 +1,6 @@
 /**
  * CONVERSA DO SUPORTE (RF12) — mensagens em balões, campo para responder
- * e botão para encerrar a solicitação.
+ * e botão para encerrar a solicitação (quem abriu pode reabrir depois).
  */
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -17,11 +17,13 @@ import { alunoPorId, usuarioPorId } from '../../../dados/consultas';
 import { chamadosVisiveis } from '../../../dados/permissoes';
 import { dataHora, NOME_PERFIL, NOME_SETOR } from '../../../utilidades/formatar';
 import { cor, espaco, raio, tipografia } from '../../../tema';
+import { useToqueUnico } from '../../../utilidades/toque-unico';
 
 export default function TelaConversa() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { db, responderChamado, encerrarChamado } = useBanco();
+  const { db, responderChamado, encerrarChamado, reabrirChamado } = useBanco();
   const usuario = useUsuario();
+  const { liberado, travar } = useToqueUnico();
   const mostrar = useMensagem();
   const [texto, setTexto] = useState('');
   const chamado = chamadosVisiveis(db, usuario).find((c) => c.id === id); // RN09
@@ -37,8 +39,10 @@ export default function TelaConversa() {
   const souAutor = chamado.criadoPorId === usuario.id;
 
   const enviar = () => {
+    if (!liberado()) return; // evita pedido duplicado com dois toques rápidos
     const resultado = responderChamado(chamado.id, texto);
     if (!resultado.ok) return mostrar(resultado.erro, 'erro');
+    travar();
     setTexto('');
   };
 
@@ -68,9 +72,23 @@ export default function TelaConversa() {
       <Tela
         rodape={
           encerrado ? (
-            <Text style={[tipografia.corpoPequeno, { color: cor.suave, textAlign: 'center' }]}>
-              Conversa encerrada. Abra uma nova solicitação se precisar.
-            </Text>
+            <View style={{ gap: espaco[2] }}>
+              <Text style={[tipografia.corpoPequeno, { color: cor.suave, textAlign: 'center' }]}>
+                {souAutor ? 'Conversa encerrada. Se a dúvida voltou, reabra.' : 'Conversa encerrada.'}
+              </Text>
+              {souAutor ? (
+                <Botao
+                  texto="Reabrir conversa"
+                  icone="restore"
+                  variante="contorno"
+                  largo
+                  aoTocar={() => {
+                    const resultado = reabrirChamado(chamado.id);
+                    mostrar(resultado.ok ? 'Conversa reaberta. O setor foi avisado.' : resultado.erro, resultado.ok ? 'ok' : 'erro');
+                  }}
+                />
+              ) : null}
+            </View>
           ) : (
             <View style={estilos.escrever}>
               <TextInput

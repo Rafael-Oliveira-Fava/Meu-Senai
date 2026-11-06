@@ -16,12 +16,14 @@ import { alunosVisiveis, podePublicar, podePublicarGeral, turmasPermitidas } fro
 import type { CategoriaAviso, Publico } from '../../../dados/tipos';
 import { NOME_CATEGORIA } from '../../../utilidades/formatar';
 import { cor, espaco, tipografia } from '../../../tema';
+import { useToqueUnico } from '../../../utilidades/toque-unico';
 
 type Destino = 'todos' | 'responsaveis' | 'alunos' | 'turma' | 'individual';
 
 export default function TelaNovoAviso() {
   const { db, publicarAviso } = useBanco();
   const usuario = useUsuario();
+  const { liberado, travar } = useToqueUnico();
   const mostrar = useMensagem();
   const geral = podePublicarGeral(usuario);
   const turmas = turmasPermitidas(db, usuario);
@@ -62,6 +64,7 @@ export default function TelaNovoAviso() {
   ];
 
   const publicar = () => {
+    if (!liberado()) return; // evita pedido duplicado com dois toques rápidos
     setErro(null);
     if (!destino) return setErro('Escolha para quem enviar.');
     if (destino === 'turma' && !turma) return setErro('Escolha a turma.');
@@ -75,6 +78,7 @@ export default function TelaNovoAviso() {
 
     const resultado = publicarAviso({ titulo, texto, categoria, publico, pedeCiencia });
     if (!resultado.ok) return setErro(resultado.erro);
+    travar();
     mostrar(destino === 'individual' ? 'Aviso individual enviado.' : 'Comunicado publicado.');
     router.replace(`/aviso/${resultado.id}`);
   };

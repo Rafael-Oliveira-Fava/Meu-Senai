@@ -12,6 +12,7 @@ import { useMensagem } from '../../../componentes/mensagem';
 import { useBanco, useUsuario } from '../../../dados/banco';
 import { alunosVisiveis, ehFamilia, SETORES } from '../../../dados/permissoes';
 import type { Setor } from '../../../dados/tipos';
+import { useToqueUnico } from '../../../utilidades/toque-unico';
 
 const ICONE_SETOR = {
   secretaria: 'file-document-outline',
@@ -23,6 +24,7 @@ const ICONE_SETOR = {
 export default function TelaNovaSolicitacao() {
   const { db, abrirChamado } = useBanco();
   const usuario = useUsuario();
+  const { liberado, travar } = useToqueUnico();
   const mostrar = useMensagem();
   const familia = ehFamilia(usuario);
   const alunos = alunosVisiveis(db, usuario);
@@ -42,10 +44,12 @@ export default function TelaNovaSolicitacao() {
   const [erro, setErro] = useState<string | null>(null);
 
   const enviar = () => {
+    if (!liberado()) return; // evita pedido duplicado com dois toques rápidos
     setErro(null);
     if (!setor) return setErro('Escolha para quem enviar.');
     const resultado = abrirChamado({ setor, assunto, texto, professorId: professorId ?? undefined, alunoId: alunoId ?? undefined });
     if (!resultado.ok) return setErro(resultado.erro);
+    travar();
     mostrar('Solicitação enviada. Acompanhe a resposta na Central de suporte.');
     router.replace(`/suporte/${resultado.id}`);
   };

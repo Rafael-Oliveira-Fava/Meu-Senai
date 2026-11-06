@@ -15,6 +15,7 @@ import { alunoPorId } from '../../../dados/consultas';
 import { MAX_RESPONSAVEIS, podeVincularResponsavel } from '../../../dados/permissoes';
 import { mascaraTelefone, primeiroNome } from '../../../utilidades/formatar';
 import { cor, tipografia } from '../../../tema';
+import { useToqueUnico } from '../../../utilidades/toque-unico';
 
 type Parentesco = 'Mãe' | 'Pai' | 'Avó/Avô' | 'Responsável legal';
 
@@ -22,6 +23,7 @@ export default function TelaVincular() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { db, vincularResponsavel } = useBanco();
   const usuario = useUsuario();
+  const { liberado, travar } = useToqueUnico();
   const mostrar = useMensagem();
   const aluno = alunoPorId(db, id);
   const [nome, setNome] = useState('');
@@ -38,9 +40,11 @@ export default function TelaVincular() {
   const vagas = MAX_RESPONSAVEIS - aluno.responsavelIds.length;
 
   const vincular = () => {
+    if (!liberado()) return; // evita pedido duplicado com dois toques rápidos
     if (!parentesco) return setErro('Escolha o parentesco.');
     const resultado = vincularResponsavel(aluno.id, { nome, email, telefone, parentesco });
     if (!resultado.ok) return setErro(resultado.erro);
+    travar();
     mostrar(`${primeiroNome(nome)} vinculado a ${primeiroNome(aluno.nome)}.`);
     if (router.canGoBack()) router.back();
     else router.replace(`/aluno/${aluno.id}`);
