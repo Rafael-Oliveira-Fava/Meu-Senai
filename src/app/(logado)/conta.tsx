@@ -1,24 +1,20 @@
 /**
- * MINHA CONTA — dados do usuário, nota de privacidade (LGPD), trocar senha,
- * sair e restaurar os dados de demonstração.
+ * MINHA CONTA — dados do usuário, nota de privacidade (LGPD), trocar senha e sair.
  */
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
-import { confirmar } from '../../componentes/confirmar';
 import { Botao } from '../../componentes/controles';
 import { Avatar, BarraTopo, Cartao, Tela, TituloSecao } from '../../componentes/estrutura';
 import { LinhaInfo } from '../../componentes/indicadores';
-import { useMensagem } from '../../componentes/mensagem';
 import { useBanco, useUsuario } from '../../dados/banco';
 import { alunosVisiveis, ehFamilia } from '../../dados/permissoes';
 import { NOME_PERFIL } from '../../utilidades/formatar';
 import { cor, espaco, tipografia } from '../../tema';
 
 export default function TelaConta() {
-  const { db, sair, restaurarDemonstracao } = useBanco();
+  const { db, sair } = useBanco();
   const usuario = useUsuario();
-  const mostrar = useMensagem();
   const alunos = alunosVisiveis(db, usuario);
 
   return (
@@ -53,7 +49,7 @@ export default function TelaConta() {
             conforme a função de cada um (LGPD).
           </Text>
           <Text style={[tipografia.corpoPequeno, { color: cor.suave }]}>
-            Nesta versão de demonstração, os dados ficam no servidor da escola (banco MySQL), e só a sua sessão fica salva neste aparelho.
+            Os dados ficam no servidor da escola. Neste aparelho fica salva só a sua sessão.
           </Text>
         </Cartao>
 
@@ -68,18 +64,6 @@ export default function TelaConta() {
               sair();
               router.replace('/entrar');
             }}
-          />
-          <Botao
-            texto="Restaurar dados de demonstração"
-            icone="restore"
-            variante="perigo"
-            largo
-            aoTocar={() =>
-              confirmar('Restaurar dados?', 'Todos os avisos, pedidos e mensagens criados nesta demonstração serão apagados.', () => {
-                restaurarDemonstracao();
-                mostrar('Dados de demonstração restaurados.');
-              })
-            }
           />
         </View>
       </Tela>
