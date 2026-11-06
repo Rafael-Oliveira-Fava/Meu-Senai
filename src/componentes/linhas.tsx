@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { alunoPorId, naoLido, precisaCiencia, usuarioPorId } from '../dados/consultas';
-import { podeDecidir } from '../dados/permissoes';
+import { autorizacaoVencida, podeDecidir } from '../dados/permissoes';
 import type { Atestado, Autorizacao, Aviso, BancoDados, CategoriaAviso, Chamado, Usuario } from '../dados/tipos';
 import {
   dataCurta,
@@ -147,7 +147,7 @@ export function LinhaAutorizacao({ db, autorizacao: a, usuario }: { db: BancoDad
         esperaMinhaResposta ? (
           <Etiqueta tom="vermelho" icone="hand-pointing-right" texto="Sua resposta" />
         ) : (
-          <EtiquetaSituacao situacao={a.situacao} textos={textos} />
+          <EtiquetaSituacao situacao={a.situacao} textos={textos} vencida={autorizacaoVencida(a)} />
         )
       }
       protocolo={a.protocolo}

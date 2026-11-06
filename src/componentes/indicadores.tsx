@@ -41,8 +41,21 @@ export function Etiqueta({
   );
 }
 
-/** Situação de atestado/autorização. `textos` troca as palavras quando precisa. */
-export function EtiquetaSituacao({ situacao, textos }: { situacao: Situacao; textos?: Partial<Record<Situacao, string>> }) {
+/**
+ * Situação de atestado/autorização. `textos` troca as palavras quando precisa.
+ * `vencida`: pedido pendente cuja data já passou.
+ */
+export function EtiquetaSituacao({
+  situacao,
+  textos,
+  vencida,
+}: {
+  situacao: Situacao;
+  textos?: Partial<Record<Situacao, string>>;
+  vencida?: boolean;
+}) {
+  if (vencida) return <Etiqueta icone="calendar-remove" texto="Vencido · sem resposta" />;
+  if (situacao === 'cancelado') return <Etiqueta icone="cancel" texto={textos?.cancelado ?? 'Cancelado'} />;
   if (situacao === 'aprovado') return <Etiqueta tom="verde" icone="check-circle" texto={textos?.aprovado ?? 'Aprovado'} />;
   if (situacao === 'recusado') return <Etiqueta tom="vermelho" icone="close-circle" texto={textos?.recusado ?? 'Recusado'} />;
   return <Etiqueta tom="ambar" icone="clock-outline" texto={textos?.pendente ?? 'Pendente'} />;

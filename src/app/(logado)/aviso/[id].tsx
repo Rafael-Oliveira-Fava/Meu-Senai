@@ -1,29 +1,35 @@
 /**
  * DETALHE DO AVISO (RF06) — marca como lido ao abrir. No aviso individual,
  * o responsável confirma "Estou ciente"; a equipe acompanha quem leu e confirmou.
+ * Quem publicou pode corrigir ou apagar o aviso e lembrar quem ainda não confirmou.
  */
-import { useLocalSearchParams } from 'expo-router';
-import { useEffect } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Aparecer } from '../../../componentes/animacao';
-import { Botao } from '../../../componentes/controles';
+import { confirmar } from '../../../componentes/confirmar';
+import { Botao, Campo } from '../../../componentes/controles';
 import { Avatar, BarraTopo, Bloqueado, Cartao, Divisor, Tela } from '../../../componentes/estrutura';
 import { Icone } from '../../../componentes/icone';
-import { Etiqueta } from '../../../componentes/indicadores';
+import { Etiqueta, FaixaErro } from '../../../componentes/indicadores';
 import { descreverPublico, ehAvisoSerio } from '../../../componentes/linhas';
 import { useMensagem } from '../../../componentes/mensagem';
 import { useBanco, useUsuario } from '../../../dados/banco';
 import { alunoPorId, precisaCiencia, usuarioPorId } from '../../../dados/consultas';
-import { destinatariosDoAviso, ehEquipe, podeVerAviso } from '../../../dados/permissoes';
+import { destinatariosDoAviso, ehEquipe, podeEditarAviso, podeLembrarCiencia, podeVerAviso } from '../../../dados/permissoes';
 import { dataHora, NOME_CATEGORIA, NOME_PERFIL } from '../../../utilidades/formatar';
 import { cor, espaco, raio, tipografia } from '../../../tema';
 
 export default function TelaAviso() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { db, marcarAvisoLido, darCiencia } = useBanco();
+  const { db, marcarAvisoLido, darCiencia, editarAviso, apagarAviso, lembrarCiencia } = useBanco();
   const usuario = useUsuario();
   const mostrar = useMensagem();
+  const [editando, setEditando] = useState(false);
+  const [titulo, setTitulo] = useState('');
+  const [texto, setTexto] = useState('');
+  const [erro, setErro] = useState<string | null>(null);
   const aviso = db.avisos.find((a) => a.id === id);
   const permitido = !!aviso && podeVerAviso(db, usuario, aviso); // RN06
 
@@ -39,6 +45,33 @@ export default function TelaAviso() {
   const serio = ehAvisoSerio(aviso);
   const destinatarios = destinatariosDoAviso(db, aviso);
   const responsaveis = aviso.publico.tipo === 'individual' ? (alunoPorId(db, aviso.publico.alunoId)?.responsavelIds ?? []) : [];
+  const faltamConfirmar = responsaveis.filter((rid) => !aviso.cientes.some((c) => c.usuarioId === rid)).length;
+  const ehAutor = podeEditarAviso(usuario, aviso);
+
+  const comecarEdicao = () => {
+    setTitulo(aviso.titulo);
+    setTexto(aviso.texto);
+    setErro(null);
+    setEditando(true);
+  };
+  const salvarEdicao = () => {
+    const resultado = editarAviso(aviso.id, { titulo, texto });
+    if (!resultado.ok) return setErro(resultado.erro);
+    setEditando(false);
+    mostrar('Aviso corrigido. Os destinatários foram avisados.');
+  };
+  const apagar = () =>
+    confirmar('Apagar aviso?', 'O aviso some para todos os destinatários. Isso não pode ser desfeito.', () => {
+      const resultado = apagarAviso(aviso.id);
+      if (!resultado.ok) return mostrar(resultado.erro, 'erro');
+      mostrar('Aviso apagado.');
+      if (router.canGoBack()) router.back();
+      else router.replace('/avisos');
+    });
+  const lembrar = () => {
+    const resultado = lembrarCiencia(aviso.id);
+    mostrar(resultado.ok ? 'Lembrete enviado a quem ainda não confirmou.' : resultado.erro, resultado.ok ? 'ok' : 'erro');
+  };
 
   const rodape = precisaCiencia(aviso, usuario) ? (
     <View style={{ gap: espaco[2] }}>
@@ -112,6 +145,9 @@ export default function TelaAviso() {
                 <Numero rotulo="Leram" valor={aviso.lidoPor.filter((id) => destinatarios.some((u) => u.id === id)).length} />
                 {aviso.pedeCiencia ? <Numero rotulo="Confirmaram" valor={`${aviso.cientes.length}/${responsaveis.length}`} /> : null}
               </View>
+              {podeLembrarCiencia(usuario, aviso) && faltamConfirmar > 0 ? (
+                <Botao texto="Lembrar quem não confirmou" icone="bell-ring-outline" variante="suave" aoTocar={lembrar} largo />
+              ) : null}
               {aviso.pedeCiencia
                 ? responsaveis.map((rid) => {
                     const r = usuarioPorId(db, rid);
@@ -128,6 +164,33 @@ export default function TelaAviso() {
                 : null}
             </Cartao>
           </Aparecer>
+        ) : null}
+
+        {/* Corrigir ou apagar: só quem publicou */}
+        {ehAutor && editando ? (
+          <Cartao style={{ gap: espaco[3] }}>
+            <Text style={[tipografia.subtitulo, { color: cor.tinta }]}>Corrigir aviso</Text>
+            <FaixaErro mensagem={erro} />
+            <Campo rotulo="Título" obrigatorio value={titulo} onChangeText={setTitulo} maxLength={90} />
+            <Campo rotulo="Mensagem" obrigatorio value={texto} onChangeText={setTexto} multiline />
+            <View style={{ flexDirection: 'row', gap: espaco[3] }}>
+              <View style={{ flex: 1 }}>
+                <Botao texto="Cancelar" variante="contorno" aoTocar={() => setEditando(false)} largo />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Botao texto="Salvar" icone="check" aoTocar={salvarEdicao} largo />
+              </View>
+            </View>
+          </Cartao>
+        ) : ehAutor ? (
+          <View style={{ flexDirection: 'row', gap: espaco[3] }}>
+            <View style={{ flex: 1 }}>
+              <Botao texto="Corrigir" icone="pencil-outline" variante="contorno" aoTocar={comecarEdicao} largo />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Botao texto="Apagar" icone="delete-outline" variante="perigo" aoTocar={apagar} largo />
+            </View>
+          </View>
         ) : null}
       </Tela>
     </>

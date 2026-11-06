@@ -69,7 +69,8 @@ export interface Aviso {
   cientes: { usuarioId: string; em: string }[];
 }
 
-export type Situacao = 'pendente' | 'aprovado' | 'recusado';
+/** `cancelado`: quem fez o pedido de autorização desistiu antes da decisão. */
+export type Situacao = 'pendente' | 'aprovado' | 'recusado' | 'cancelado';
 
 /** Atestado médico enviado pelo responsável (RF08). */
 export interface Atestado {

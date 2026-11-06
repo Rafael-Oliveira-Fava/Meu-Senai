@@ -62,6 +62,9 @@ function lerDia(texto: string) {
 /** Date → "2026-11-01". */
 const paraDia = (d: Date) => `${d.getFullYear()}-${doisDigitos(d.getMonth() + 1)}-${doisDigitos(d.getDate())}`;
 
+/** Hoje no formato guardado no banco ("2026-11-01"), pelo relógio do aparelho. */
+export const hoje = () => paraDia(new Date());
+
 /** "2026-11-01" → "01/11/2026". */
 export function dataCompleta(texto: string) {
   const d = lerDia(texto);
