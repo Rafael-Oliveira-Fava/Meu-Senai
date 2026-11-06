@@ -1,9 +1,9 @@
-# Meu SENAI — MVP
+# Meu SENAI
 
-Aplicativo mobile de comunicação entre o SENAI, alunos, responsáveis e equipe (TCC).
+Aplicativo mobile de comunicação entre o SENAI, alunos, responsáveis e equipe.
 Feito com **Expo (React Native) + TypeScript**. Roda no Android, iOS e no navegador.
 
-> Todos os dados são fictícios e ficam num banco **MySQL**, acessado por um pequeno servidor Node.js (`servidor/`). Não há integração com sistemas oficiais do SENAI.
+> Os dados ficam num banco **MySQL**, acessado por um pequeno servidor Node.js (`servidor/`). Não há integração com sistemas oficiais do SENAI.
 
 ## Como rodar
 
@@ -23,7 +23,7 @@ npm install
 npm run servidor
 ```
 
-Na primeira vez, ele grava os dados de demonstração no banco.
+Na primeira vez, ele grava os dados iniciais no banco.
 
 **4. Abrir o app** (em outro terminal):
 
@@ -36,9 +36,9 @@ npx expo start
 
 Se o servidor estiver em outro endereço, crie um arquivo `.env` na raiz com `EXPO_PUBLIC_API_URL=http://IP-DO-SERVIDOR:3333`.
 
-## Contas de demonstração
+## Contas de teste
 
-Senha de todas: `senai123`. Na tela de login, basta tocar no perfil.
+Senha de todas: `senai123`. Na tela de login, **segure o logo "MEU SENAI" por 2 segundos** para abrir o acesso rápido e entrar tocando no perfil.
 
 | Perfil | E-mail |
 | --- | --- |
@@ -51,9 +51,9 @@ Senha de todas: `senai123`. Na tela de login, basta tocar no perfil.
 | Responsável (mãe da Ana) | claudia@familia.demo |
 | Aluna | ana@aluno.demo |
 
-"Minha conta" → **Restaurar dados de demonstração** volta o banco ao estado inicial.
+No acesso rápido, **Restaurar dados iniciais** volta o banco ao estado inicial.
 
-## O que o MVP cobre
+## O que o app cobre
 
 | Requisito | Onde |
 | --- | --- |
@@ -129,7 +129,7 @@ src/
     icone.tsx
   dados/
     tipos.ts            formato de cada informação
-    demonstracao.ts     dados fictícios da apresentação
+    demonstracao.ts     dados iniciais (gravados no banco no primeiro uso)
     permissoes.ts       regras de negócio (quem vê e faz o quê)
     consultas.ts        contadores e buscas
     banco.tsx           dados + ações (publicar, enviar, decidir...)

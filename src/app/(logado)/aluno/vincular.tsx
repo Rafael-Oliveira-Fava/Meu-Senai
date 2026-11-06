@@ -80,7 +80,7 @@ export default function TelaVincular() {
               placeholder="email@exemplo.com"
               autoCapitalize="none"
               keyboardType="email-address"
-              dica="Usado para entrar no aplicativo. Senha inicial de demonstração: senai123."
+              dica="Usado para entrar no aplicativo. A senha inicial é senai123: informe ao responsável."
             />
             <Campo
               rotulo="Telefone"
