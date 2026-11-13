@@ -37,6 +37,7 @@ export const TABELAS = {
     turno: 'texto',
     horarios: 'json',
     responsavelIds: 'json',
+    foto: 'texto',
   },
   avisos: {
     id: 'texto',

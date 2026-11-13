@@ -82,6 +82,8 @@ test('servidor + MySQL', async (t) => {
   const script = readFileSync('servidor/banco.sql', 'utf8').replace(/\bmeusenai\b/g, BANCO_TESTE);
   await admin.query(`DROP DATABASE IF EXISTS ${BANCO_TESTE}`);
   await admin.query(script);
+  // Simula um banco criado antes da coluna "foto": o servidor deve criá-la sozinho.
+  await admin.query(`ALTER TABLE ${BANCO_TESTE}.alunos DROP COLUMN foto`);
 
   const servidor = spawn(process.execPath, ['--import', 'tsx', 'servidor/index.ts'], {
     env: { ...process.env, ...envDoServidor() },
@@ -100,7 +102,21 @@ test('servidor + MySQL', async (t) => {
       const dados = await buscarDados();
       assert.equal(dados.usuarios.length, 10);
       assert.ok(dados.avisos.length > 0 && dados.notificacoes.length > 0);
-      assert.match(saida, /dados de demonstração gravados/);
+      assert.match(saida, /dados iniciais gravados/);
+    });
+
+    await t.test('servidor cria colunas novas em banco antigo (foto do aluno)', async () => {
+      const [colunas] = await admin.query<mysql.RowDataPacket[]>(`SHOW COLUMNS FROM ${BANCO_TESTE}.alunos LIKE 'foto'`);
+      assert.equal(colunas.length, 1);
+    });
+
+    await t.test('foto do aluno é gravada e pode ser removida', async () => {
+      const antes = await buscarDados();
+      assert.equal((await mudar(antes, (d) => (d.alunos[0].foto = '/arquivos/foto-teste'))).status, 200);
+      const comFoto = await buscarDados();
+      assert.equal(comFoto.alunos.find((a) => a.id === antes.alunos[0].id)?.foto, '/arquivos/foto-teste');
+      assert.equal((await mudar(comFoto, (d) => (d.alunos[0].foto = undefined))).status, 200);
+      assert.equal((await buscarDados()).alunos.find((a) => a.id === antes.alunos[0].id)?.foto, undefined);
     });
 
     await t.test('GET /dados nunca envia senhas', async () => {

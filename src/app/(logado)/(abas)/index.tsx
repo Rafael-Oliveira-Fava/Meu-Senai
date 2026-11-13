@@ -246,7 +246,7 @@ function CartaoHoje({ aluno }: { aluno: Aluno }) {
   return (
     <Cartao aoTocar={() => router.push(`/aluno/${aluno.id}`)} descricao="Ver perfil e horários do aluno" style={{ gap: espaco[3] }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: espaco[3] }}>
-        <Avatar nome={aluno.nome} tamanho={40} tom="azul" />
+        <Avatar nome={aluno.nome} tamanho={40} tom="azul" foto={aluno.foto} />
         <View style={{ flex: 1 }}>
           <Text style={[tipografia.subtitulo, { color: cor.tinta }]} numberOfLines={1}>
             {aluno.nome}

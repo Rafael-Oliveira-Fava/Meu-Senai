@@ -118,7 +118,7 @@ export default function TelaAluno() {
               descricao={`${item.nome}, turma ${item.turma}`}
               style={{ flexDirection: 'row', alignItems: 'center', gap: espaco[3], paddingVertical: espaco[3] }}
             >
-              <Avatar nome={item.nome} tamanho={44} tom="azul" />
+              <Avatar nome={item.nome} tamanho={44} tom="azul" foto={item.foto} />
               <View style={{ flex: 1 }}>
                 <Text style={[tipografia.subtitulo, { color: cor.tinta }]}>{item.nome}</Text>
                 <Text style={[tipografia.corpoPequeno, { color: cor.suave }]}>

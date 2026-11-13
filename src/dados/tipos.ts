@@ -43,6 +43,7 @@ export interface Aluno {
   turno: string;
   horarios: Horario[];
   responsavelIds: string[]; // no máximo 2 (RN03)
+  foto?: string; // endereço da foto no servidor, ex.: "/arquivos/abc"
 }
 
 /** Para quem o aviso vai. */

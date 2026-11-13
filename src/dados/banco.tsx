@@ -638,6 +638,16 @@ function useCriarBanco() {
       return { ok: true };
     },
 
+    /** Coloca, troca ou tira (foto vazia) a foto do aluno. Só a secretaria. */
+    definirFotoAluno(alunoId: string, foto: string | undefined): Resultado {
+      if (!usuario || !podeVincularResponsavel(usuario)) return falha('Somente a secretaria altera a foto do aluno.');
+      if (!buscar(dbAtual.current.alunos, alunoId)) return falha('Aluno não encontrado.');
+      alterar((d) => {
+        buscar(d.alunos, alunoId)!.foto = foto;
+      });
+      return { ok: true };
+    },
+
     /** Tira o responsável do aluno (ex.: vinculado por engano). A conta continua existindo. */
     desvincularResponsavel(alunoId: string, responsavelId: string): Resultado {
       const aluno = buscar(dbAtual.current.alunos, alunoId);

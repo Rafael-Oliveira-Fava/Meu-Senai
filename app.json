@@ -27,7 +27,13 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Meu SENAI usa suas fotos para colocar a foto do aluno no perfil."
+        }
+      ]
     ]
   }
 }

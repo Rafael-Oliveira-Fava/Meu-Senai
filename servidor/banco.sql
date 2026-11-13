@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS alunos (
   turno           VARCHAR(30)  NOT NULL,
   horarios        JSON         NOT NULL,      -- [{ dia, entrada, saida }]
   responsavelIds  JSON         NOT NULL,
+  foto            VARCHAR(100) NULL,          -- endereço da foto em "arquivos", ex.: /arquivos/<id>
   INDEX idx_alunos_turma (turma)
 );
 
