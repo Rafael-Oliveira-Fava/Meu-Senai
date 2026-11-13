@@ -9,6 +9,7 @@ import {
   contarAvisosNaoLidos,
   contarChamadosAguardando,
   contarNotificacoesNaoLidas,
+  fotoDoAluno,
   naoLido,
   pendencias,
   precisaCiencia,
@@ -97,6 +98,17 @@ describe('avisos', () => {
     suspensao.cientes.push({ usuarioId: 'u-larissa', em: new Date().toISOString() });
     assert.ok(!precisaCiencia(suspensao, u('u-larissa')));
     assert.ok(precisaCiencia(suspensao, u('u-marcos'))); // o outro responsável ainda precisa
+  });
+});
+
+describe('fotos', () => {
+  test('a foto do aluno é a da conta dele', () => {
+    const pedro = db.alunos.find((a) => a.id === 's-pedro')!;
+    assert.equal(fotoDoAluno(db, pedro), u('u-pedro').foto);
+    assert.ok(
+      db.usuarios.every((x) => x.foto),
+      'todas as contas iniciais têm foto',
+    );
   });
 });
 

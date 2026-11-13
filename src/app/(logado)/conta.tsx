@@ -22,7 +22,7 @@ export default function TelaConta() {
       <BarraTopo titulo="Minha conta" />
       <Tela>
         <Cartao style={{ alignItems: 'center', gap: espaco[2], paddingVertical: espaco[6] }}>
-          <Avatar nome={usuario.nome} tamanho={72} tom="azul" anel />
+          <Avatar nome={usuario.nome} tamanho={72} tom="azul" anel foto={usuario.foto} />
           <Text style={[tipografia.manchete, { color: cor.tinta, textAlign: 'center' }]}>{usuario.nome}</Text>
           <Text style={[tipografia.corpo, { color: cor.suave }]}>{NOME_PERFIL[usuario.perfil]}</Text>
         </Cartao>
@@ -54,6 +54,7 @@ export default function TelaConta() {
         </Cartao>
 
         <View style={{ gap: espaco[3], marginTop: espaco[2] }}>
+          <Botao texto="Trocar foto" icone="camera-front" variante="suave" largo aoTocar={() => router.push('/foto')} />
           <Botao texto="Trocar senha" icone="lock-reset" variante="suave" largo aoTocar={() => router.push('/senha')} />
           <Botao
             texto="Sair"

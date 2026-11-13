@@ -25,6 +25,7 @@ export const TABELAS = {
     turmas: 'json',
     parentesco: 'texto',
     telefone: 'texto',
+    foto: 'texto',
   },
   alunos: {
     id: 'texto',
@@ -37,7 +38,6 @@ export const TABELAS = {
     turno: 'texto',
     horarios: 'json',
     responsavelIds: 'json',
-    foto: 'texto',
   },
   avisos: {
     id: 'texto',

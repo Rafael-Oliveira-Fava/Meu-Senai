@@ -31,7 +31,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "O Meu SENAI usa suas fotos para colocar a foto do aluno no perfil."
+          "cameraPermission": "O Meu SENAI usa a câmera para você tirar a sua foto de perfil.",
+          "microphonePermission": false
         }
       ]
     ]

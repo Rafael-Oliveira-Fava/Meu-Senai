@@ -638,12 +638,12 @@ function useCriarBanco() {
       return { ok: true };
     },
 
-    /** Coloca, troca ou tira (foto vazia) a foto do aluno. Só a secretaria. */
-    definirFotoAluno(alunoId: string, foto: string | undefined): Resultado {
-      if (!usuario || !podeVincularResponsavel(usuario)) return falha('Somente a secretaria altera a foto do aluno.');
-      if (!buscar(dbAtual.current.alunos, alunoId)) return falha('Aluno não encontrado.');
+    /** Cada pessoa troca só a própria foto (selfie tirada no app). */
+    trocarMinhaFoto(foto: string): Resultado {
+      if (!usuario) return falha('Entre novamente.');
+      if (!foto.startsWith('/arquivos/')) return falha('Foto inválida.');
       alterar((d) => {
-        buscar(d.alunos, alunoId)!.foto = foto;
+        buscar(d.usuarios, usuario.id)!.foto = foto;
       });
       return { ok: true };
     },

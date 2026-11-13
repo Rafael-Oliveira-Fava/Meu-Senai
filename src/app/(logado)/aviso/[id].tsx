@@ -111,7 +111,7 @@ export default function TelaAviso() {
               {aviso.titulo}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: espaco[3] }}>
-              <Avatar nome={autor?.nome ?? '?'} tamanho={36} tom="azul" />
+              <Avatar nome={autor?.nome ?? '?'} tamanho={36} tom="azul" foto={autor?.foto} />
               <View style={{ flex: 1 }}>
                 <Text style={[tipografia.rotulo, { color: cor.tinta }]}>{autor?.nome}</Text>
                 <Text style={[tipografia.corpoPequeno, { color: cor.suave }]}>

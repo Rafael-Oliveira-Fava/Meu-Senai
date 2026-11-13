@@ -2,12 +2,9 @@
  * PERFIL DO ALUNO (RF03, RF04) — dados do aluno, dias e horários da semana
  * e os perfis vinculados (o próprio aluno + até 2 responsáveis).
  */
-import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { api } from '../dados/api';
 import { useBanco } from '../dados/banco';
 import { usuarioPorId } from '../dados/consultas';
 import { MAX_RESPONSAVEIS, podeVincularResponsavel } from '../dados/permissoes';
@@ -23,31 +20,13 @@ import { Etiqueta, LinhaInfo } from './indicadores';
 import { useMensagem } from './mensagem';
 
 export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: Usuario; aluno: Aluno }) {
-  const { desvincularResponsavel, definirFotoAluno } = useBanco();
-  const [enviandoFoto, setEnviandoFoto] = useState(false);
+  const { desvincularResponsavel } = useBanco();
   const mostrar = useMensagem();
   const hoje = diaDeHoje();
   const responsaveis = aluno.responsavelIds.map((id) => usuarioPorId(db, id)).filter((u): u is Usuario => !!u);
   const contaDoAluno = usuarioPorId(db, aluno.usuarioId);
   const vagas = MAX_RESPONSAVEIS - responsaveis.length;
   const secretaria = podeVincularResponsavel(usuario);
-
-  /** Secretaria escolhe uma foto da galeria (recortada em quadrado) e envia para o servidor. */
-  const escolherFoto = async () => {
-    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', allowsEditing: true, aspect: [1, 1], quality: 0.5 });
-    if (r.canceled || !r.assets?.length) return;
-    const a = r.assets[0];
-    setEnviandoFoto(true);
-    try {
-      const foto = await api.enviarArquivo({ uri: a.uri, nome: a.fileName ?? 'foto.jpg', tipo: a.mimeType ?? 'image/jpeg' });
-      const resultado = definirFotoAluno(aluno.id, foto);
-      mostrar(resultado.ok ? 'Foto atualizada.' : resultado.erro, resultado.ok ? 'ok' : 'erro');
-    } catch (e) {
-      mostrar(e instanceof Error && e.message ? e.message : 'Não foi possível enviar a foto.', 'erro');
-    } finally {
-      setEnviandoFoto(false);
-    }
-  };
 
   const desvincular = (r: Usuario) =>
     confirmar('Desvincular responsável?', `${r.nome} deixará de acompanhar ${aluno.nome} pelo aplicativo.`, () => {
@@ -61,27 +40,7 @@ export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: U
     <View style={{ gap: espaco[4] }}>
       <Aparecer>
         <Cartao style={{ alignItems: 'center', gap: espaco[2], paddingVertical: espaco[6] }}>
-          {secretaria ? (
-            <Pressable
-              onPress={escolherFoto}
-              disabled={enviandoFoto}
-              accessibilityRole="button"
-              accessibilityLabel={aluno.foto ? 'Trocar foto do aluno' : 'Adicionar foto do aluno'}
-              style={{ opacity: enviandoFoto ? 0.5 : 1 }}
-            >
-              <Avatar nome={aluno.nome} tamanho={72} tom="azul" anel foto={aluno.foto} />
-              <View style={estilos.camera}>
-                <Icone nome="camera" tamanho={16} cor={cor.sobrePrimaria} />
-              </View>
-            </Pressable>
-          ) : (
-            <Avatar nome={aluno.nome} tamanho={72} tom="azul" anel foto={aluno.foto} />
-          )}
-          {secretaria && aluno.foto ? (
-            <Pressable onPress={() => definirFotoAluno(aluno.id, undefined)} accessibilityRole="button" hitSlop={8}>
-              <Text style={[tipografia.rotuloPequeno, { color: cor.vermelho }]}>Remover foto</Text>
-            </Pressable>
-          ) : null}
+          <Avatar nome={aluno.nome} tamanho={72} tom="azul" anel foto={contaDoAluno?.foto} />
           <Text style={[tipografia.manchete, { color: cor.tinta, textAlign: 'center' }]}>{aluno.nome}</Text>
           <Text style={[tipografia.corpo, { color: cor.suave, textAlign: 'center' }]}>
             {aluno.curso} · Turma {aluno.turma}
@@ -157,13 +116,14 @@ export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: U
             Até 3 perfis de acesso por aluno: o próprio aluno e até {MAX_RESPONSAVEIS} responsáveis.
           </Text>
           <View style={{ gap: espaco[1] }}>
-            {contaDoAluno ? <Pessoa nome={contaDoAluno.nome} detalhe="Aluno" email={contaDoAluno.email} /> : null}
+            {contaDoAluno ? <Pessoa nome={contaDoAluno.nome} detalhe="Aluno" email={contaDoAluno.email} foto={contaDoAluno.foto} /> : null}
             {responsaveis.map((r) => (
               <Pessoa
                 key={r.id}
                 nome={r.nome}
                 detalhe={`${r.parentesco ?? 'Responsável'}${r.telefone ? ` · ${r.telefone}` : ''}`}
                 email={r.email}
+                foto={r.foto}
                 aoDesvincular={secretaria ? () => desvincular(r) : undefined}
               />
             ))}
@@ -192,10 +152,22 @@ export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: U
   );
 }
 
-function Pessoa({ nome, detalhe, email, aoDesvincular }: { nome: string; detalhe: string; email: string; aoDesvincular?: () => void }) {
+function Pessoa({
+  nome,
+  detalhe,
+  email,
+  foto,
+  aoDesvincular,
+}: {
+  nome: string;
+  detalhe: string;
+  email: string;
+  foto?: string;
+  aoDesvincular?: () => void;
+}) {
   return (
     <View style={estilos.pessoa}>
-      <Avatar nome={nome} tamanho={40} tom="azul" />
+      <Avatar nome={nome} tamanho={40} tom="azul" foto={foto} />
       <View style={{ flex: 1 }}>
         <Text style={[tipografia.subtitulo, { color: cor.tinta }]} numberOfLines={1}>
           {nome}
@@ -227,19 +199,6 @@ const estilos = StyleSheet.create({
   colunaDia: { flex: 1.4 },
   colunaHora: { flex: 1, textAlign: 'right' },
   pessoa: { flexDirection: 'row', alignItems: 'center', gap: espaco[3], paddingVertical: espaco[2] },
-  camera: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: cor.primaria,
-    borderWidth: 2,
-    borderColor: cor.superficie,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   desvincular: { width: 44, height: 44, borderRadius: raio.pilula, alignItems: 'center', justifyContent: 'center' },
   vaga: {
     flexDirection: 'row',

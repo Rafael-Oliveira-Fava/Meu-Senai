@@ -161,7 +161,9 @@ Como funciona:
 
 Para ver os dados, no Workbench rode por exemplo `SELECT * FROM meusenai.avisos;`.
 
-As fotos e PDFs dos atestados e as fotos dos alunos ficam na tabela `arquivos` (rota `POST /arquivos`), então abrem em qualquer aparelho. A foto do aluno é colocada pela secretaria, tocando no avatar no perfil do aluno; a coluna `alunos.foto` é criada sozinha pelo servidor em bancos antigos. Se o seu banco foi criado antes dessa tabela existir, rode o `servidor/banco.sql` de novo no Workbench: ele só cria o que falta e não apaga nada.
+As fotos e PDFs dos atestados e as fotos das pessoas ficam na tabela `arquivos` (rota `POST /arquivos`), então abrem em qualquer aparelho.
+
+**Fotos de perfil:** cada pessoa tira a própria selfie em Minha conta → Trocar foto (câmera da frente, com prévia para confirmar). Quem está sem foto vê um aviso na tela inicial. As contas iniciais já começam com um avatar ilustrado com a camisa do SENAI (`servidor/fotos/`). Ao ligar, o servidor cria a coluna `usuarios.foto` em bancos antigos e coloca esses avatares em quem ainda não tem foto. Se o seu banco foi criado antes dessa tabela existir, rode o `servidor/banco.sql` de novo no Workbench: ele só cria o que falta e não apaga nada.
 
 Para mudar uma tabela: altere `servidor/banco.sql` (ou rode um `ALTER TABLE` no Workbench) e a lista de colunas em `src/dados/esquema.ts`.
 

@@ -11,10 +11,13 @@ import {
   podeAnalisarAtestado,
   podeDecidir,
 } from './permissoes';
-import type { Aviso, BancoDados, Usuario } from './tipos';
+import type { Aluno, Aviso, BancoDados, Usuario } from './tipos';
 
 export const usuarioPorId = (db: BancoDados, id: string) => db.usuarios.find((u) => u.id === id);
 export const alunoPorId = (db: BancoDados, id: string) => db.alunos.find((a) => a.id === id);
+
+/** A foto do aluno é a da conta dele. */
+export const fotoDoAluno = (db: BancoDados, aluno: Aluno) => usuarioPorId(db, aluno.usuarioId)?.foto;
 
 /** Aviso ainda não lido por este usuário (o autor não conta). */
 export const naoLido = (a: Aviso, u: Usuario) => a.autorId !== u.id && !a.lidoPor.includes(u.id);

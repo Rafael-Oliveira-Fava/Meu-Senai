@@ -83,7 +83,7 @@ test('servidor + MySQL', async (t) => {
   await admin.query(`DROP DATABASE IF EXISTS ${BANCO_TESTE}`);
   await admin.query(script);
   // Simula um banco criado antes da coluna "foto": o servidor deve criá-la sozinho.
-  await admin.query(`ALTER TABLE ${BANCO_TESTE}.alunos DROP COLUMN foto`);
+  await admin.query(`ALTER TABLE ${BANCO_TESTE}.usuarios DROP COLUMN foto`);
 
   const servidor = spawn(process.execPath, ['--import', 'tsx', 'servidor/index.ts'], {
     env: { ...process.env, ...envDoServidor() },
@@ -105,18 +105,22 @@ test('servidor + MySQL', async (t) => {
       assert.match(saida, /dados iniciais gravados/);
     });
 
-    await t.test('servidor cria colunas novas em banco antigo (foto do aluno)', async () => {
-      const [colunas] = await admin.query<mysql.RowDataPacket[]>(`SHOW COLUMNS FROM ${BANCO_TESTE}.alunos LIKE 'foto'`);
+    await t.test('servidor cria colunas novas em banco antigo (foto do usuário)', async () => {
+      const [colunas] = await admin.query<mysql.RowDataPacket[]>(`SHOW COLUMNS FROM ${BANCO_TESTE}.usuarios LIKE 'foto'`);
       assert.equal(colunas.length, 1);
     });
 
-    await t.test('foto do aluno é gravada e pode ser removida', async () => {
+    await t.test('todo usuário inicial já tem foto, e a foto abre', async () => {
+      const dados = await buscarDados();
+      assert.ok(dados.usuarios.every((u) => u.foto?.startsWith('/arquivos/foto-')));
+      const resposta = await fetch(URL + dados.usuarios[0].foto);
+      assert.equal(resposta.headers.get('content-type'), 'image/png');
+    });
+
+    await t.test('a troca de foto é gravada', async () => {
       const antes = await buscarDados();
-      assert.equal((await mudar(antes, (d) => (d.alunos[0].foto = '/arquivos/foto-teste'))).status, 200);
-      const comFoto = await buscarDados();
-      assert.equal(comFoto.alunos.find((a) => a.id === antes.alunos[0].id)?.foto, '/arquivos/foto-teste');
-      assert.equal((await mudar(comFoto, (d) => (d.alunos[0].foto = undefined))).status, 200);
-      assert.equal((await buscarDados()).alunos.find((a) => a.id === antes.alunos[0].id)?.foto, undefined);
+      assert.equal((await mudar(antes, (d) => (d.usuarios[0].foto = '/arquivos/selfie-teste'))).status, 200);
+      assert.equal((await buscarDados()).usuarios[0].foto, '/arquivos/selfie-teste');
     });
 
     await t.test('GET /dados nunca envia senhas', async () => {

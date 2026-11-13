@@ -20,6 +20,7 @@ export interface Usuario {
   alunoIds: string[];
   turmas?: string[]; // turmas do professor
   parentesco?: string; // ex.: "Mãe"
+  foto?: string; // selfie da pessoa, guardada no servidor, ex.: "/arquivos/abc"
   telefone?: string;
 }
 
@@ -43,7 +44,6 @@ export interface Aluno {
   turno: string;
   horarios: Horario[];
   responsavelIds: string[]; // no máximo 2 (RN03)
-  foto?: string; // endereço da foto no servidor, ex.: "/arquivos/abc"
 }
 
 /** Para quem o aviso vai. */

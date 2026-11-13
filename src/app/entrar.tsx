@@ -20,7 +20,7 @@ import { CONTAS_DEMO, SENHA_DEMO } from '../dados/demonstracao';
 import { cor, espaco, raio, sombra, tipografia } from '../tema';
 
 export default function TelaEntrar() {
-  const { usuario, entrar, restaurarDemonstracao } = useBanco();
+  const { db, usuario, entrar, restaurarDemonstracao } = useBanco();
   const mostrar = useMensagem();
   const [acessoRapido, setAcessoRapido] = useState(false);
   const margens = useSafeAreaInsets();
@@ -116,7 +116,7 @@ export default function TelaEntrar() {
                       accessibilityLabel={`Entrar como ${conta.nome}, ${conta.descricao}`}
                       style={({ pressed }) => [estilos.conta, pressed && { backgroundColor: cor.superficieAlt }]}
                     >
-                      <Avatar nome={conta.nome} tamanho={40} tom="azul" />
+                      <Avatar nome={conta.nome} tamanho={40} tom="azul" foto={db.usuarios.find((u) => u.email === conta.email)?.foto} />
                       <View style={{ flex: 1 }}>
                         <Text style={[tipografia.subtitulo, { color: cor.tinta }]}>{conta.nome}</Text>
                         <Text style={[tipografia.corpoPequeno, { color: cor.suave }]}>{conta.descricao}</Text>
