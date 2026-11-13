@@ -638,6 +638,16 @@ function useCriarBanco() {
       return { ok: true };
     },
 
+    /** Cada pessoa troca só a própria foto (selfie tirada no app). */
+    trocarMinhaFoto(foto: string): Resultado {
+      if (!usuario) return falha('Entre novamente.');
+      if (!foto.startsWith('/arquivos/')) return falha('Foto inválida.');
+      alterar((d) => {
+        buscar(d.usuarios, usuario.id)!.foto = foto;
+      });
+      return { ok: true };
+    },
+
     /** Tira o responsável do aluno (ex.: vinculado por engano). A conta continua existindo. */
     desvincularResponsavel(alunoId: string, responsavelId: string): Resultado {
       const aluno = buscar(dbAtual.current.alunos, alunoId);

@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
   alunoIds    JSON         NOT NULL,          -- alunos ligados à conta
   turmas      JSON         NULL,              -- turmas do professor
   parentesco  VARCHAR(40)  NULL,
-  telefone    VARCHAR(20)  NULL
+  telefone    VARCHAR(20)  NULL,
+  foto        VARCHAR(100) NULL               -- selfie da pessoa em "arquivos", ex.: /arquivos/<id>
 );
 
 -- Dados do aluno (RF03) e até 2 responsáveis (RF04).

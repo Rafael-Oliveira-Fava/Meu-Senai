@@ -40,7 +40,7 @@ export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: U
     <View style={{ gap: espaco[4] }}>
       <Aparecer>
         <Cartao style={{ alignItems: 'center', gap: espaco[2], paddingVertical: espaco[6] }}>
-          <Avatar nome={aluno.nome} tamanho={72} tom="azul" anel />
+          <Avatar nome={aluno.nome} tamanho={72} tom="azul" anel foto={contaDoAluno?.foto} />
           <Text style={[tipografia.manchete, { color: cor.tinta, textAlign: 'center' }]}>{aluno.nome}</Text>
           <Text style={[tipografia.corpo, { color: cor.suave, textAlign: 'center' }]}>
             {aluno.curso} · Turma {aluno.turma}
@@ -116,13 +116,14 @@ export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: U
             Até 3 perfis de acesso por aluno: o próprio aluno e até {MAX_RESPONSAVEIS} responsáveis.
           </Text>
           <View style={{ gap: espaco[1] }}>
-            {contaDoAluno ? <Pessoa nome={contaDoAluno.nome} detalhe="Aluno" email={contaDoAluno.email} /> : null}
+            {contaDoAluno ? <Pessoa nome={contaDoAluno.nome} detalhe="Aluno" email={contaDoAluno.email} foto={contaDoAluno.foto} /> : null}
             {responsaveis.map((r) => (
               <Pessoa
                 key={r.id}
                 nome={r.nome}
                 detalhe={`${r.parentesco ?? 'Responsável'}${r.telefone ? ` · ${r.telefone}` : ''}`}
                 email={r.email}
+                foto={r.foto}
                 aoDesvincular={secretaria ? () => desvincular(r) : undefined}
               />
             ))}
@@ -151,10 +152,22 @@ export function PerfilAluno({ db, usuario, aluno }: { db: BancoDados; usuario: U
   );
 }
 
-function Pessoa({ nome, detalhe, email, aoDesvincular }: { nome: string; detalhe: string; email: string; aoDesvincular?: () => void }) {
+function Pessoa({
+  nome,
+  detalhe,
+  email,
+  foto,
+  aoDesvincular,
+}: {
+  nome: string;
+  detalhe: string;
+  email: string;
+  foto?: string;
+  aoDesvincular?: () => void;
+}) {
   return (
     <View style={estilos.pessoa}>
-      <Avatar nome={nome} tamanho={40} tom="azul" />
+      <Avatar nome={nome} tamanho={40} tom="azul" foto={foto} />
       <View style={{ flex: 1 }}>
         <Text style={[tipografia.subtitulo, { color: cor.tinta }]} numberOfLines={1}>
           {nome}

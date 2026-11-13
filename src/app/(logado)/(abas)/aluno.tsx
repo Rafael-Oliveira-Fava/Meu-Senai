@@ -13,6 +13,7 @@ import { Icone } from '../../../componentes/icone';
 import { Vazio } from '../../../componentes/indicadores';
 import { PerfilAluno } from '../../../componentes/perfil-aluno';
 import { useBanco, useUsuario } from '../../../dados/banco';
+import { fotoDoAluno } from '../../../dados/consultas';
 import { alunosVisiveis, ehFamilia } from '../../../dados/permissoes';
 import type { Aluno } from '../../../dados/tipos';
 import { primeiroNome } from '../../../utilidades/formatar';
@@ -118,7 +119,7 @@ export default function TelaAluno() {
               descricao={`${item.nome}, turma ${item.turma}`}
               style={{ flexDirection: 'row', alignItems: 'center', gap: espaco[3], paddingVertical: espaco[3] }}
             >
-              <Avatar nome={item.nome} tamanho={44} tom="azul" />
+              <Avatar nome={item.nome} tamanho={44} tom="azul" foto={fotoDoAluno(db, item)} />
               <View style={{ flex: 1 }}>
                 <Text style={[tipografia.subtitulo, { color: cor.tinta }]}>{item.nome}</Text>
                 <Text style={[tipografia.corpoPequeno, { color: cor.suave }]}>

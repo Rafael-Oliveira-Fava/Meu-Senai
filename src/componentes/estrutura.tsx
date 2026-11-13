@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { enderecoArquivo } from '../dados/api';
 import { iniciais } from '../utilidades/formatar';
 import { cor, espaco, FAIXA_SENAI, raio, sombra, tipografia, TOQUE_MINIMO } from '../tema';
 import { Tocavel } from './animacao';
@@ -183,11 +184,14 @@ export function Avatar({
   tamanho = 44,
   tom = 'branco',
   anel,
+  foto,
 }: {
   nome: string;
   tamanho?: number;
   tom?: 'branco' | 'azul' | 'escuro';
   anel?: boolean;
+  /** Endereço da foto no servidor; sem foto, mostra as iniciais. */
+  foto?: string;
 }) {
   const fundo = { branco: cor.sobrePrimaria, azul: cor.primariaClara, escuro: cor.tinta }[tom];
   return (
@@ -206,15 +210,19 @@ export function Avatar({
       accessibilityElementsHidden
       importantForAccessibility="no"
     >
-      <Text
-        style={{
-          fontFamily: tipografia.titulo.fontFamily,
-          fontSize: tamanho * 0.38,
-          color: tom === 'escuro' ? cor.sobrePrimaria : cor.primaria,
-        }}
-      >
-        {iniciais(nome)}
-      </Text>
+      {foto ? (
+        <Image source={{ uri: enderecoArquivo(foto) }} style={{ width: '100%', height: '100%', borderRadius: tamanho / 2 }} />
+      ) : (
+        <Text
+          style={{
+            fontFamily: tipografia.titulo.fontFamily,
+            fontSize: tamanho * 0.38,
+            color: tom === 'escuro' ? cor.sobrePrimaria : cor.primaria,
+          }}
+        >
+          {iniciais(nome)}
+        </Text>
+      )}
     </View>
   );
 }

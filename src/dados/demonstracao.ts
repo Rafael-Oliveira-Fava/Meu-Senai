@@ -3,7 +3,7 @@
  * (e de novo em "Restaurar dados iniciais").
  * As datas são calculadas a partir de hoje, então os dados sempre parecem atuais.
  */
-import type { BancoDados } from './tipos';
+import type { BancoDados, Usuario } from './tipos';
 
 export const SENHA_DEMO = 'senai123';
 
@@ -39,45 +39,56 @@ export function criarDadosDemonstracao(): BancoDados {
   return {
     contadorProtocolo: 152,
 
-    usuarios: [
-      { id: 'u-pedro', nome: 'Pedro Henrique Santos', email: 'pedro@aluno.demo', senha, perfil: 'aluno', alunoIds: ['s-pedro'] },
-      { id: 'u-ana', nome: 'Ana Beatriz Lima', email: 'ana@aluno.demo', senha, perfil: 'aluno', alunoIds: ['s-ana'] },
-      {
-        id: 'u-larissa',
-        nome: 'Larissa Santos',
-        email: 'larissa@familia.demo',
-        senha,
-        perfil: 'responsavel',
-        alunoIds: ['s-pedro'],
-        parentesco: 'Mãe',
-        telefone: '(11) 98765-4321',
-      },
-      {
-        id: 'u-marcos',
-        nome: 'Marcos Santos',
-        email: 'marcos@familia.demo',
-        senha,
-        perfil: 'responsavel',
-        alunoIds: ['s-pedro'],
-        parentesco: 'Pai',
-        telefone: '(11) 97654-3210',
-      },
-      {
-        id: 'u-claudia',
-        nome: 'Cláudia Lima',
-        email: 'claudia@familia.demo',
-        senha,
-        perfil: 'responsavel',
-        alunoIds: ['s-ana'],
-        parentesco: 'Mãe',
-        telefone: '(11) 96543-2109',
-      },
-      { id: 'u-ricardo', nome: 'Ricardo Alves', email: 'ricardo@senai.demo', senha, perfil: 'professor', alunoIds: [], turmas: ['MEC-2B'] },
-      { id: 'u-sonia', nome: 'Sônia Martins', email: 'sonia@senai.demo', senha, perfil: 'professor', alunoIds: [], turmas: ['ELT-1A'] },
-      { id: 'u-fernanda', nome: 'Fernanda Rocha', email: 'fernanda@senai.demo', senha, perfil: 'coordenador', alunoIds: [] },
-      { id: 'u-paulo', nome: 'Paulo Mendes', email: 'paulo@senai.demo', senha, perfil: 'diretor', alunoIds: [] },
-      { id: 'u-juliana', nome: 'Juliana Costa', email: 'juliana@senai.demo', senha, perfil: 'secretaria', alunoIds: [] },
-    ],
+    // Cada pessoa começa com a foto inicial (servidor/fotos); depois troca pela própria selfie.
+    usuarios: (
+      [
+        { id: 'u-pedro', nome: 'Pedro Henrique Santos', email: 'pedro@aluno.demo', senha, perfil: 'aluno', alunoIds: ['s-pedro'] },
+        { id: 'u-ana', nome: 'Ana Beatriz Lima', email: 'ana@aluno.demo', senha, perfil: 'aluno', alunoIds: ['s-ana'] },
+        {
+          id: 'u-larissa',
+          nome: 'Larissa Santos',
+          email: 'larissa@familia.demo',
+          senha,
+          perfil: 'responsavel',
+          alunoIds: ['s-pedro'],
+          parentesco: 'Mãe',
+          telefone: '(11) 98765-4321',
+        },
+        {
+          id: 'u-marcos',
+          nome: 'Marcos Santos',
+          email: 'marcos@familia.demo',
+          senha,
+          perfil: 'responsavel',
+          alunoIds: ['s-pedro'],
+          parentesco: 'Pai',
+          telefone: '(11) 97654-3210',
+        },
+        {
+          id: 'u-claudia',
+          nome: 'Cláudia Lima',
+          email: 'claudia@familia.demo',
+          senha,
+          perfil: 'responsavel',
+          alunoIds: ['s-ana'],
+          parentesco: 'Mãe',
+          telefone: '(11) 96543-2109',
+        },
+        {
+          id: 'u-ricardo',
+          nome: 'Ricardo Alves',
+          email: 'ricardo@senai.demo',
+          senha,
+          perfil: 'professor',
+          alunoIds: [],
+          turmas: ['MEC-2B'],
+        },
+        { id: 'u-sonia', nome: 'Sônia Martins', email: 'sonia@senai.demo', senha, perfil: 'professor', alunoIds: [], turmas: ['ELT-1A'] },
+        { id: 'u-fernanda', nome: 'Fernanda Rocha', email: 'fernanda@senai.demo', senha, perfil: 'coordenador', alunoIds: [] },
+        { id: 'u-paulo', nome: 'Paulo Mendes', email: 'paulo@senai.demo', senha, perfil: 'diretor', alunoIds: [] },
+        { id: 'u-juliana', nome: 'Juliana Costa', email: 'juliana@senai.demo', senha, perfil: 'secretaria', alunoIds: [] },
+      ] satisfies Usuario[]
+    ).map((u) => ({ ...u, foto: `/arquivos/foto-${u.id}` })),
 
     alunos: [
       {

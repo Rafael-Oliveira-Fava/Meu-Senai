@@ -20,6 +20,7 @@ export interface Usuario {
   alunoIds: string[];
   turmas?: string[]; // turmas do professor
   parentesco?: string; // ex.: "Mãe"
+  foto?: string; // selfie da pessoa, guardada no servidor, ex.: "/arquivos/abc"
   telefone?: string;
 }
 

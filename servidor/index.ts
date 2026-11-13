@@ -15,6 +15,7 @@
  * As regras de negócio (quem pode o quê) ficam no app, em src/dados/banco.tsx.
  */
 import { randomUUID } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
@@ -130,13 +131,39 @@ function validarMudancas(corpo: unknown): Mudancas | null {
   return okGravar && okApagar ? (m as Mudancas) : null;
 }
 
-/** Banco vazio (primeira vez): grava os dados de demonstração. */
+/** Colunas novas em bancos criados antes delas: acrescenta sem apagar nada. */
+async function atualizarTabelas() {
+  const [foto] = await banco.query<RowDataPacket[]>("SHOW COLUMNS FROM usuarios LIKE 'foto'");
+  if (!foto.length) await banco.query('ALTER TABLE usuarios ADD COLUMN foto VARCHAR(100) NULL');
+}
+
+/**
+ * Fotos iniciais (servidor/fotos/<id do usuário>.png): guarda na tabela arquivos
+ * e coloca em quem ainda está sem foto. Pode rodar sempre: não repete nem troca selfies.
+ */
+async function guardarFotosIniciais() {
+  for (const nome of readdirSync('servidor/fotos').filter((n) => n.endsWith('.png'))) {
+    const usuarioId = nome.replace('.png', '');
+    const conteudo = readFileSync(`servidor/fotos/${nome}`);
+    await banco.query('INSERT IGNORE INTO arquivos (id, nome, tipo, tamanho, conteudo, enviadoEm) VALUES (?, ?, ?, ?, ?, ?)', [
+      `foto-${usuarioId}`,
+      nome,
+      'image/png',
+      conteudo.length,
+      conteudo,
+      new Date().toISOString(),
+    ]);
+    await banco.query('UPDATE usuarios SET foto = ? WHERE id = ? AND foto IS NULL', [`/arquivos/foto-${usuarioId}`, usuarioId]);
+  }
+}
+
+/** Banco vazio (primeira vez): grava os dados iniciais. */
 async function colocarDemonstracaoSeVazio() {
   const [linhas] = await banco.query<RowDataPacket[]>('SELECT COUNT(*) AS total FROM usuarios');
   if (Number(linhas[0].total) > 0) return;
   const vazio = Object.fromEntries(NOMES_TABELAS.map((t) => [t, new Map()])) as Foto;
   await gravar(diferencas(vazio, criarDadosDemonstracao()));
-  console.log('Banco vazio: dados de demonstração gravados.');
+  console.log('Banco vazio: dados iniciais gravados.');
 }
 
 /* ───────── Rotas ───────── */
@@ -265,7 +292,9 @@ app.use((erro: Error & { code?: string }, _req: Request, res: Response, _next: N
   else res.status(500).json({ ok: false, erro: 'Erro no servidor. Tente de novo.' });
 });
 
-colocarDemonstracaoSeVazio()
+atualizarTabelas()
+  .then(guardarFotosIniciais)
+  .then(colocarDemonstracaoSeVazio)
   .then(() => app.listen(PORTA, '0.0.0.0', () => console.log(`Servidor do Meu SENAI em http://localhost:${PORTA}`)))
   .catch((erro) => {
     console.error('Não consegui conectar ao MySQL. Confira servidor/.env e se você rodou servidor/banco.sql.\n', erro.message);

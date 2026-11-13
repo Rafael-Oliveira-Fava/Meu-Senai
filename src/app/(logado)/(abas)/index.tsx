@@ -20,6 +20,7 @@ import {
   contarNotificacoesNaoLidas,
   pendencias,
   precisaCiencia,
+  fotoDoAluno,
 } from '../../../dados/consultas';
 import { alunosVisiveis, avisosVisiveis, ehEquipe, ehFamilia } from '../../../dados/permissoes';
 import type { Aluno, Usuario } from '../../../dados/tipos';
@@ -122,7 +123,7 @@ export default function TelaInicio() {
           </View>
           <View style={estilos.linhaSaudacao}>
             <Pressable onPress={() => router.push('/conta')} accessibilityRole="button" accessibilityLabel="Minha conta" hitSlop={6}>
-              <Avatar nome={usuario.nome} tamanho={52} anel />
+              <Avatar nome={usuario.nome} tamanho={52} anel foto={usuario.foto} />
             </Pressable>
             <View style={{ flex: 1 }}>
               <Text style={[tipografia.manchete, { color: cor.sobrePrimaria }]} numberOfLines={1}>
@@ -169,9 +170,23 @@ export default function TelaInicio() {
           ))}
         </Aparecer>
 
+        {/* Sem foto: aviso para tirar a selfie */}
+        {!usuario.foto ? (
+          <Aparecer ordem={1}>
+            <Cartao aoTocar={() => router.push('/foto')} descricao="Tirar minha foto" style={estilos.semFoto}>
+              <Icone nome="camera-front-variant" tamanho={28} cor={cor.vermelho} />
+              <View style={{ flex: 1 }}>
+                <Text style={[tipografia.subtitulo, { color: cor.tinta }]}>Coloque sua foto</Text>
+                <Text style={[tipografia.corpoPequeno, { color: cor.suave }]}>Tire uma selfie para a escola identificar você.</Text>
+              </View>
+              <Icone nome="chevron-right" cor={cor.bordaForte} />
+            </Cartao>
+          </Aparecer>
+        ) : null}
+
         {aluno ? (
           <Aparecer ordem={1}>
-            <CartaoHoje aluno={aluno} />
+            <CartaoHoje aluno={aluno} foto={fotoDoAluno(db, aluno)} />
           </Aparecer>
         ) : null}
 
@@ -240,13 +255,13 @@ function Bolinha({ numero, borda }: { numero: number; borda: string }) {
 }
 
 /** Cartão do aluno com a entrada e a saída de hoje (ou a próxima aula). */
-function CartaoHoje({ aluno }: { aluno: Aluno }) {
+function CartaoHoje({ aluno, foto }: { aluno: Aluno; foto?: string }) {
   const hoje = aluno.horarios.find((h) => h.dia === diaDeHoje());
   const proxima = hoje ? null : proximaAula(aluno);
   return (
     <Cartao aoTocar={() => router.push(`/aluno/${aluno.id}`)} descricao="Ver perfil e horários do aluno" style={{ gap: espaco[3] }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: espaco[3] }}>
-        <Avatar nome={aluno.nome} tamanho={40} tom="azul" />
+        <Avatar nome={aluno.nome} tamanho={40} tom="azul" foto={foto} />
         <View style={{ flex: 1 }}>
           <Text style={[tipografia.subtitulo, { color: cor.tinta }]} numberOfLines={1}>
             {aluno.nome}
@@ -310,6 +325,13 @@ const estilos = StyleSheet.create({
   },
   linhaLogo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: espaco[4] },
   linhaSaudacao: { flexDirection: 'row', alignItems: 'center', gap: espaco[3] },
+  semFoto: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espaco[3],
+    borderLeftWidth: 4,
+    borderLeftColor: cor.vermelho,
+  },
   sino: {
     width: 48,
     height: 48,
